@@ -1,8 +1,4 @@
-<<<<<<< Updated upstream
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
-=======
-﻿using System;
+using System;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 
@@ -39,6 +35,7 @@ internal class Program
         Console.WriteLine("1. 상태보기");
         Console.WriteLine("2. 인벤토리");
         Console.WriteLine("3. 상점");
+
         Console.WriteLine();
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
@@ -170,6 +167,7 @@ internal class Program
 
         Console.WriteLine();
         Console.WriteLine($"1 ~ {player.PossessedItems.Count}. 해당 아이템 장착 및 소모");
+
         Console.WriteLine("0. 나가기");
         Console.WriteLine();
 
@@ -232,6 +230,7 @@ internal class Program
         }
     }
 
+  
     static void DisplayStore()
     {
         Console.Clear();
@@ -413,7 +412,7 @@ internal class Program
 
     }
 
-
+  
     static void WritingItem(Item item)
     {
         Console.Write("               |");
@@ -544,7 +543,7 @@ class Store
 
     static Item potato = new Item("감자", "체력 회복   +10", Item.ItemType.Food, "맛은 없지만 필요한 비상식량", null, 200, false);
     static Item chicken = new Item("백숙", "체력 회복   +30", Item.ItemType.Food, "가성비 좋은 닭요리", null, 500, false);
-    static Item boyang = new Item("삼선보양탕", "체력 회복   +70", Item.ItemType.Food, "체력 회복에 좋은 보양탕", null, 1000, false);
+    static Item boyang = new Item("삼선보양탕", "체력 회복   +70", Item.ItemType.Food, "체력 회복에 좋은 보양탕", null, 1000, false);   
 
     static Item sweetJuice = new Item("달달주스", "체력 최대치 +2", Item.ItemType.Potion, "힘을 나게 해주는 신비한 주스", null, 500, false);
     static Item midPotion = new Item("중급 보약", "체력 최대치 +5", Item.ItemType.Potion, "가성비 좋은 닭요리", null, 800, false);
@@ -558,5 +557,4 @@ class Store
         sweetJuice, midPotion, toxicMushroom
     };
 }
->>>>>>> Stashed changes
 
