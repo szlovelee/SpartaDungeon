@@ -1,7 +1,3 @@
-<<<<<<< Updated upstream
-﻿// See https://aka.ms/new-console-template for more information
-Console.WriteLine("Hello, World!");
-=======
 ﻿using System;
 using System.Reflection.Emit;
 using System.Collections.Generic;
@@ -22,11 +18,10 @@ internal class Program
         player = new Character("Chad", "전사", 1, 10, 5, 100, 1500);
 
         // 아이템 정보 세팅
-        player.PossessedItems.Add(Store.StoreItems[0]);
-        player.PossessedItems.Add(Store.StoreItems[3]);
-        player.PossessedItems.Add(Store.StoreItems[6]);
-        player.PossessedItems.Add(Store.StoreItems[9]);
+        Item ironArmor = new Item("무쇠 갑옷", "방어력      +5", Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
+        Item oldSword = new Item("낡은 검", "공격력      +2", Item.ItemType.Weapon, "쉽게 볼 수 있는 낡은 검입니다.", 1, 0, false);
 
+    player.PossessedItems = new List<Item> { ironArmor, oldSword };
     }
 
     static void DisplayGameIntro()  //시작화면
@@ -331,6 +326,7 @@ internal class Program
             AnswerClear();
             Console.WriteLine("구매를 완료했습니다.");
             player.PossessedItems.Add(Store.StoreItems[input - 1]);
+            player.Gold -= Store.StoreItems[input - 1].Price;
             Thread.Sleep(2000);
 
         }
@@ -358,26 +354,36 @@ internal class Program
 
         Console.WriteLine("[보유 아이템]");
 
-        int count = 1;
-        foreach (Item item in player.PossessedItems)
+        if (player.PossessedItems.Count <= 2)
         {
-            if (item.Price == 0) continue;
-            Console.Write("-  ");
-            Console.Write($"{count++}.");
-            WritingItem(item);
-            Console.SetCursorPosition(86, Console.CursorTop - 1);
-            Console.WriteLine($" {(int)(item.Price * 0.85)} G ");
+            Console.WriteLine("판매 가능한 아이템이 없습니다.");
+            Console.WriteLine();
+        }
+        else
+        {
+            int count = 1;
+            foreach (Item item in player.PossessedItems)
+            {
+                if (item.Price == 0) continue;
+                Console.Write("-  ");
+                Console.Write($"{count++}.");
+                WritingItem(item);
+                Console.SetCursorPosition(86, Console.CursorTop - 1);
+                Console.WriteLine($" {(int)(item.Price * 0.85)} G ");
+            }
+
+            Console.WriteLine();
+            if (player.PossessedItems.Count == 3) Console.WriteLine("1. 해당 아이템 판매");
+            else Console.WriteLine($"1 ~ {player.PossessedItems.Count - 2}. 해당 아이템 판매");
         }
 
-        Console.WriteLine();
-        Console.WriteLine($"1 ~ {player.PossessedItems.Count}. 해당 아이템 구매");
         Console.WriteLine("0. 나가기");
         Console.WriteLine();
 
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
-        int input = CheckValidInput(0, player.PossessedItems.Count);
+        int input = CheckValidInput(0, player.PossessedItems.Count - 2);
         if (input == 0) DisplayStore();
         else
         {
@@ -472,10 +478,7 @@ internal class Program
 
 public class Character
 {
-    private static Item ironArmor = new Item("무쇠 갑옷", "방어력      +5", Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
-    private static Item oldSword = new Item("낡은 검", "공격력      +2", Item.ItemType.Weapon, "쉽게 볼 수 있는 낡은 검입니다.", 1, 0, false);
-
-    public List<Item> PossessedItems = new List<Item> { ironArmor, oldSword };
+    public List<Item> PossessedItems;
 
     public string Name { get; }
     public string Job { get; }
@@ -558,5 +561,3 @@ class Store
         sweetJuice, midPotion, toxicMushroom
     };
 }
->>>>>>> Stashed changes
-
