@@ -180,26 +180,47 @@ internal class Program
         }
         else
         {
+
             switch (player.PossessedItems[input - 1].Type)
             {
                 case Item.ItemType.Weapon:
-                    player.AddAtk = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
-                    int index1 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Weapon);
-                    if (index1 != -1)
+                    if (player.PossessedItems[input - 1].Equipped == false)
                     {
-                        player.PossessedItems[index1].Equipped = false;
+                        player.AddAtk = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
+                        int index1 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Weapon);
+                        if (index1 != -1)
+                        {
+                            player.PossessedItems[index1].Equipped = false;
+                        }
+                        player.PossessedItems[input - 1].Equipped = true;
                     }
-                    player.PossessedItems[input - 1].Equipped = true;
+                    else
+                    {
+                        player.AddAtk = 0;
+                        player.PossessedItems[input - 1].Equipped = false;
+                    }
+                    
                     break;
+
                 case Item.ItemType.Shield:
-                    player.AddDef = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
-                    int index2 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Shield);
-                    if (index2 != -1)
+                    if (player.PossessedItems[input - 1].Equipped == false)
                     {
-                        player.PossessedItems[index2].Equipped = false;
+                        player.AddDef = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
+                        int index2 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Shield);
+                        if (index2 != -1)
+                        {
+                            player.PossessedItems[index2].Equipped = false;
+                        }
+                        player.PossessedItems[input - 1].Equipped = true;
                     }
-                    player.PossessedItems[input - 1].Equipped = true;
+                    else
+                    {
+                        player.AddDef = 0;
+                        player.PossessedItems[input - 1].Equipped = false;
+                    }
+
                     break;
+
                 case Item.ItemType.Food:
                     int addedHp = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
                     if (player.CurrentHp == player.Hp)
@@ -215,6 +236,7 @@ internal class Program
                         player.PossessedItems.RemoveAt(input - 1);
                     }
                     break;
+
                 case Item.ItemType.Potion:
                     int AddHp = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
                     if (player.CurrentHp == player.Hp)
