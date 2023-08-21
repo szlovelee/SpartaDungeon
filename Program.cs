@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 
@@ -34,11 +34,13 @@ internal class Program
         Console.WriteLine();
         Console.WriteLine("1. 상태보기");
         Console.WriteLine("2. 인벤토리");
+        Console.WriteLine("3. 상점");
+
         Console.WriteLine();
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
-        int input = CheckValidInput(1, 2);
+        int input = CheckValidInput(1, 3);
         switch (input)
         {
             case 1:
@@ -47,6 +49,9 @@ internal class Program
 
             case 2:
                 DisplayInventory();
+                break;
+            case 3:
+                DisplayStore();
                 break;
         }
     }
@@ -106,6 +111,9 @@ internal class Program
             if (item.Equipped) Console.Write("[E]");
             else Console.Write("   ");
             WritingItem(item);
+            Console.SetCursorPosition(86, Console.CursorTop -1);
+            if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
+            else Console.WriteLine(" (소모품) ");
         }
 
         Console.WriteLine();
@@ -152,10 +160,14 @@ internal class Program
             if (item.Equipped) Console.Write("[E]");
             else Console.Write("   ");
             WritingItem(item);
+            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
+            else Console.WriteLine(" (소모품) ");
         }
 
         Console.WriteLine();
-        Console.WriteLine($"1~{player.PossessedItems.Count}. 해당 아이템 장착 및 소모");
+        Console.WriteLine($"1 ~ {player.PossessedItems.Count}. 해당 아이템 장착 및 소모");
+
         Console.WriteLine("0. 나가기");
         Console.WriteLine();
 
@@ -218,6 +230,189 @@ internal class Program
         }
     }
 
+  
+    static void DisplayStore()
+    {
+        Console.Clear();
+
+        Console.WriteLine("상점");
+        Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.WriteLine();
+
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+
+        Console.WriteLine("[아이템 목록]");
+
+        foreach (Item item in Store.StoreItems)
+        {
+            Console.Write("-    ");
+            WritingItem(item);
+            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            if (player.PossessedItems.IndexOf(item) != -1) Console.WriteLine(" 구매 완료 ");
+            else Console.WriteLine($" {item.Price} G ");
+            
+
+
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("1. 아이템 구매");
+        Console.WriteLine("2. 아이템 판매");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, 2);
+        switch (input)
+        {
+            case 0:
+                DisplayGameIntro();
+                break;
+            case 1:
+                ItemBuy();
+                break;
+            case 2:
+                ItemSell();
+                break;
+        }
+
+
+    }
+
+    static void ItemBuy()
+    {
+        Console.Clear();
+
+        Console.WriteLine("상점 - 아이템 구매");
+        Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.WriteLine();
+
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+
+        Console.WriteLine("[아이템 목록]");
+
+        int count = 1;
+        foreach (Item item in Store.StoreItems)
+        {
+            Console.Write("-  ");
+            Console.Write($"{count++}.");
+            WritingItem(item);
+            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            if (player.PossessedItems.IndexOf(item) != -1) Console.WriteLine(" 구매 완료 ");
+            else Console.WriteLine($" {item.Price} G ");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("1 ~ 12. 해당 아이템 구매");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, 12);
+        if (input == 0) DisplayStore();
+        else if (player.PossessedItems.IndexOf(Store.StoreItems[input - 1]) != -1)
+        {
+            AnswerClear();
+            Console.WriteLine("이미 구매한 아이템입니다.");
+            Thread.Sleep(2000);
+
+        }
+        else if (Store.StoreItems[input - 1].Price <= player.Gold)
+        {
+            AnswerClear();
+            Console.WriteLine("구매를 완료했습니다.");
+            player.PossessedItems.Add(Store.StoreItems[input - 1]);
+            Thread.Sleep(2000);
+
+        }
+        else if (Store.StoreItems[input - 1].Price > player.Gold)
+        {
+            AnswerClear();
+            Console.WriteLine("Gold가 부족합니다.");
+            Thread.Sleep(2000);
+
+        }
+        ItemBuy();
+    }
+
+    static void ItemSell()
+    {
+        Console.Clear();
+
+        Console.WriteLine("상점 - 아이템 판매");
+        Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.WriteLine();
+
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+
+        Console.WriteLine("[보유 아이템]");
+
+        int count = 1;
+        foreach (Item item in player.PossessedItems)
+        {
+            if (item.Price == 0) continue;
+            Console.Write("-  ");
+            Console.Write($"{count++}.");
+            WritingItem(item);
+            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            Console.WriteLine($" {(int)(item.Price * 0.85)} G ");
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"1 ~ {player.PossessedItems.Count}. 해당 아이템 구매");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, player.PossessedItems.Count);
+        if (input == 0) DisplayStore();
+        else
+        {
+            AnswerClear();
+            Console.WriteLine($"{player.PossessedItems[input + 1].Name}을(를) 판매하시겠습니까? (판매: 0, 취소: 1)");
+            Console.WriteLine();
+            Console.WriteLine("원하시는 행동을 입력해주세요.");
+            Console.Write(">> ");
+
+            int answer = CheckValidInput(0, 1);
+            if (answer == 1)
+            {
+                ItemSell();
+            }
+            else
+            {
+                if (player.PossessedItems[input +  1].Equipped == true)
+                {
+                    if (player.PossessedItems[input + 1].Type == Item.ItemType.Weapon) player.AddAtk = 0;
+                    else if (player.PossessedItems[input + 1].Type == Item.ItemType.Shield) player.AddDef = 0;
+                }
+
+                player.Gold += (int)(player.PossessedItems[input + 1].Price * 0.85);
+                player.PossessedItems.RemoveAt(input + 1);
+
+                AnswerClear();
+                Console.WriteLine("판매가 완료되었습니다.");
+                Thread.Sleep(2000);
+            }
+
+            ItemSell();
+        }
+
+    }
+
+  
     static void WritingItem(Item item)
     {
         Console.Write("               |");
@@ -234,10 +429,7 @@ internal class Program
         Console.SetCursorPosition(48, Console.CursorTop);
         Console.Write("                                    |");
         Console.SetCursorPosition(48, Console.CursorTop);
-        Console.Write($" {item.Desc} ");
-        Console.SetCursorPosition(86, Console.CursorTop);
-        if (item.Level != null) Console.WriteLine($"Lv. {item.Level}");
-        else Console.WriteLine();
+        Console.WriteLine($" {item.Desc} ");
     }
 
     static int CheckValidInput(int min, int max)
@@ -279,8 +471,8 @@ internal class Program
 
 public class Character
 {
-    private static Item ironArmor = new Item("무쇠 갑옷", "방어력   +5", Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
-    private static Item oldSword = new Item("낡은 검", "공격력   +2", Item.ItemType.Weapon, "쉽게 볼 수 있는 낡은 검입니다.", 1, 0, false);
+    private static Item ironArmor = new Item("무쇠 갑옷", "방어력      +5", Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
+    private static Item oldSword = new Item("낡은 검", "공격력      +2", Item.ItemType.Weapon, "쉽게 볼 수 있는 낡은 검입니다.", 1, 0, false);
 
     public List<Item> PossessedItems = new List<Item> { ironArmor, oldSword };
 
@@ -341,17 +533,17 @@ public class Item
 
 class Store
 {
-    static Item invincibleShield = new Item("무적의 방패", "방어력   +10", Item.ItemType.Shield, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
-    static Item dragonGuard = new Item("용의 수호", "방어력   +30", Item.ItemType.Shield, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
-    static Item celestialArmor = new Item("천상의 갑주", "방어력   +50", Item.ItemType.Shield, "천계의 갑옷", 1, 10000, false);
+    static Item invincibleShield = new Item("무적의 방패", "방어력      +10", Item.ItemType.Shield, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
+    static Item dragonGuard = new Item("용의 수호", "방어력      +30", Item.ItemType.Shield, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
+    static Item celestialArmor = new Item("천상의 갑주", "방어력      +50", Item.ItemType.Shield, "천계의 갑옷", 1, 10000, false);
 
-    static Item windbladeBow = new Item("검풍의 활", "공격력   +5", Item.ItemType.Weapon, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
-    static Item dragonSword = new Item("비룡의 검", "공격력   +10", Item.ItemType.Weapon, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
-    static Item heavenlySpear = new Item("천무의 창", "공격력   +20", Item.ItemType.Weapon, "천계의 갑옷", 1, 10000, false);
+    static Item windbladeBow = new Item("검풍의 활", "공격력      +5", Item.ItemType.Weapon, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
+    static Item dragonSword = new Item("비룡의 검", "공격력      +10", Item.ItemType.Weapon, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
+    static Item heavenlySpear = new Item("천무의 창", "공격력      +20", Item.ItemType.Weapon, "천계의 갑옷", 1, 10000, false);
 
-    static Item potato = new Item("감자", "체력 회복  +10", Item.ItemType.Food, "맛은 없지만 필요한 비상식량", null, 200, false);
-    static Item chicken = new Item("백숙", "체력 회복  +30", Item.ItemType.Food, "가성비 좋은 닭요리", null, 500, false);
-    static Item boyang = new Item("삼선보양탕", "체력 회복  +70", Item.ItemType.Food, "체력 회복에 좋은 보양탕", null, 1000, false);
+    static Item potato = new Item("감자", "체력 회복   +10", Item.ItemType.Food, "맛은 없지만 필요한 비상식량", null, 200, false);
+    static Item chicken = new Item("백숙", "체력 회복   +30", Item.ItemType.Food, "가성비 좋은 닭요리", null, 500, false);
+    static Item boyang = new Item("삼선보양탕", "체력 회복   +70", Item.ItemType.Food, "체력 회복에 좋은 보양탕", null, 1000, false);   
 
     static Item sweetJuice = new Item("달달주스", "체력 최대치 +2", Item.ItemType.Potion, "힘을 나게 해주는 신비한 주스", null, 500, false);
     static Item midPotion = new Item("중급 보약", "체력 최대치 +5", Item.ItemType.Potion, "가성비 좋은 닭요리", null, 800, false);
