@@ -70,8 +70,7 @@ internal class Program
                 Resting();
                 break;
             case 5:
-                if (status == GameState.Playing) DisplayDungeon();
-                else
+                if (status == GameState.Resting)
                 {
                     AnswerClear();
                     Console.WriteLine("휴식 모드입니다.");
@@ -79,6 +78,14 @@ internal class Program
                     Thread.Sleep(3000);
                     DisplayGameIntro();
                 }
+                else if (player.CurrentHp == 0)
+                {
+                    AnswerClear();
+                    Console.WriteLine("체력이 부족합니다. 휴식을 취하거나 음식을 섭취한 후 다시 시도하세요.");
+                    Thread.Sleep(3000);
+                    DisplayGameIntro();
+                }
+                else DisplayDungeon();
                 break;
         }
     }
@@ -91,10 +98,13 @@ internal class Program
         Console.WriteLine("캐릭터의 정보르 표시합니다.");
         Console.WriteLine();
         Console.WriteLine($"Lv.{player.Level}");
+        Console.WriteLine($"exp({player.CurrentExp} / {player.MaxExp})");
+        Console.WriteLine("----------------------------------");
         Console.WriteLine($"{player.Name}({player.Job})");
+        Console.WriteLine();
+        Console.WriteLine($"체력   : {player.CurrentHp} / {player.Hp}");
         Console.WriteLine($"공격력 : {player.Atk + player.AddAtk}");
         Console.WriteLine($"방어력 : {player.Def + player.AddDef}");
-        Console.WriteLine($"체력   : {player.CurrentHp} / {player.Hp}");
         Console.WriteLine($"Gold   : {player.Gold} G");
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
@@ -598,6 +608,7 @@ internal class Program
 
         if (dungeon.RecDef > player.Def + player.AddDef) Console.WriteLine("    현재 방어력이 낮습니다.");
         else Console.WriteLine();
+        Console.WriteLine();
 
         Console.WriteLine("1. 입장");
         Console.WriteLine("0. 나가기");
@@ -633,11 +644,18 @@ internal class Program
 
         if (dungeon.DungeonFight(player))
         {
+            LevelControl(dungeon);
             Console.WriteLine("던전 클리어");
             Console.WriteLine();
             Console.WriteLine("[탐험 보상]");
             Console.WriteLine($"기본 보상 {dungeon.Reward} G");
             Console.WriteLine($"추가 보상 {dungeon.AdditionalReward} G");
+            Console.WriteLine($"exp +{dungeon.RewardExp}");
+            if (player.CurrentExp == 0)
+            {
+                Console.WriteLine();
+                Console.WriteLine($"* 레벨업! Lv.{player.Level -1} -> Lv.{player.Level}");
+            }
         }
         else
         {
@@ -660,6 +678,18 @@ internal class Program
         if (input == 0) DisplayGameIntro();
     }
 
+    static void LevelControl(Dungeon dungeon)
+    {
+        player.CurrentExp += dungeon.RewardExp;
+        if (player.CurrentExp >= player.MaxExp)
+        {
+            ++player.Level;
+            player.CurrentExp = 0;
+            player.MaxExp = player.Level * 100;
+            player.Atk += 1;
+            player.Def += 2;
+        }
+    }
 
     static int CheckValidInput(int min, int max)
     {
@@ -712,6 +742,8 @@ public class Character
     public int AddAtk { get; set; }
     public int AddDef { get; set; }
     public int CurrentHp { get; set; }
+    public int MaxExp { get; set; }
+    public int CurrentExp { get; set; }
 
 
     public Character(string name, string job, int level, int atk, int def, int hp, int gold)
@@ -724,6 +756,8 @@ public class Character
         Hp = hp;
         Gold = gold;
         CurrentHp = hp;
+        MaxExp = level * 100;
+        CurrentExp = 0;
     }
 }
 
@@ -745,6 +779,7 @@ public class Item
     public int Price { get; }
     public bool Equipped { get; set; }
 
+
     public Item(string name, string effect, ItemType type, string desc, int? level, int price, bool equipped)
     {
         Name = name;
@@ -763,7 +798,7 @@ class Store
     static Item dragonGuard = new Item("용의 수호", "방어력      +30", Item.ItemType.Shield, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
     static Item celestialArmor = new Item("천상의 갑주", "방어력      +50", Item.ItemType.Shield, "천계의 갑옷", 1, 10000, false);
 
-    static Item windbladeBow = new Item("검풍의 활", "공격력      +5", Item.ItemType.Weapon, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
+    static Item windbladeBow = new Item("검풍의 활", "공격력      +5", Item.ItemType.Weapon, "바람을 타는 검처럼 화살을 쏘는 활", 1, 1000, false);
     static Item dragonSword = new Item("비룡의 검", "공격력      +10", Item.ItemType.Weapon, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
     static Item heavenlySpear = new Item("천무의 창", "공격력      +20", Item.ItemType.Weapon, "천계의 갑옷", 1, 10000, false);
 
@@ -790,6 +825,7 @@ class Dungeon
     public int Reward { get; set; }
     public int AdditionalReward { get; set; }
     public string DungeonInfo { get; set; }
+    public int RewardExp { get; set; }
 
     Random random = new Random();
 
@@ -801,16 +837,19 @@ class Dungeon
                 RecDef = 15;
                 Reward = 1000;
                 DungeonInfo = "난이도   ★☆☆   | 권장 방어력: 15";
+                RewardExp = 30;
                 break;
             case 2:
                 RecDef = 40;
                 Reward = 1700;
                 DungeonInfo = "난이도   ★★☆   | 권장 방어력: 40";
+                RewardExp = 50;
                 break;
             case 3:
                 RecDef = 55;
                 Reward = 2500;
                 DungeonInfo = "난이도   ★★★   | 권장 방어력: 55";
+                RewardExp = 70;
                 break;
         }
     }
@@ -827,16 +866,22 @@ class Dungeon
                 return false;
             }       
         }
-
-        DungeonResult(player);
-        return true;
+        bool success = true;
+        DungeonResult(player, ref success);
+        return success;
     }
 
 
-    public void DungeonResult(Character player)
+    public void DungeonResult(Character player, ref bool success)
     {
         int defGap = (player.Def + player.AddDef) - RecDef;
         player.CurrentHp -= random.Next(20 - defGap, 36 - defGap);
+        if (player.CurrentHp <= 0)
+        {
+            player.CurrentHp = 0;
+            success = false;
+            return;
+        }
 
         AdditionalReward = Reward * random.Next(player.Atk + player.AddAtk, (player.Atk + player.AddAtk) * 2 + 1) / 100;
         player.Gold += Reward + AdditionalReward;
