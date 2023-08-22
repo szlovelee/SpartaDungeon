@@ -151,7 +151,7 @@ internal class Program
             WritingItem(item);
             Console.SetCursorPosition(86, Console.CursorTop -1);
             if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
-            else Console.WriteLine(" (소모품) ");
+            else Console.WriteLine($" 보유: {item.Count} 개 ");
         }
 
         Console.WriteLine();
@@ -208,7 +208,7 @@ internal class Program
             WritingItem(item);
             Console.SetCursorPosition(86, Console.CursorTop - 1);
             if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
-            else Console.WriteLine(" (소모품) ");
+            else Console.WriteLine($" 보유: {item.Count} 개 ");
         }
 
         Console.WriteLine();
@@ -453,7 +453,7 @@ internal class Program
             Console.Write("-    ");
             WritingItem(item);
             Console.SetCursorPosition(86, Console.CursorTop - 1);
-            if (player.PossessedItems.IndexOf(item) != -1) Console.WriteLine(" 구매 완료 ");
+            if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
             else Console.WriteLine($" {item.Price} G ");
             
 
@@ -507,7 +507,8 @@ internal class Program
             Console.Write($"{count++}.");
             WritingItem(item);
             Console.SetCursorPosition(86, Console.CursorTop - 1);
-            if (player.PossessedItems.IndexOf(item) != -1) Console.WriteLine(" 구매 완료 ");
+
+            if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
             else Console.WriteLine($" {item.Price} G ");
         }
 
@@ -521,7 +522,7 @@ internal class Program
 
         int input = CheckValidInput(0, 12);
         if (input == 0) DisplayStore();
-        else if (player.PossessedItems.IndexOf(Store.StoreItems[input - 1]) != -1)
+        else if (player.PossessedItems.IndexOf(Store.StoreItems[input - 1]) != -1 && Store.StoreItems[input - 1].Level != null)
         {
             AnswerClear();
             Console.WriteLine("이미 구매한 아이템입니다.");
@@ -532,8 +533,21 @@ internal class Program
         {
             AnswerClear();
             Console.WriteLine("구매를 완료했습니다.");
-            player.PossessedItems.Add(Store.StoreItems[input - 1]);
+
+            Item item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
+            if (player.PossessedItems.IndexOf(item) == -1)
+            {
+                player.PossessedItems.Add(Store.StoreItems[input - 1]);
+                item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
+            }
+
+            if (item.Level == null)
+            {
+                ++item.Count;
+            }
             player.Gold -= Store.StoreItems[input - 1].Price;
+
+
             Thread.Sleep(2000);
 
         }
@@ -595,27 +609,44 @@ internal class Program
         else
         {
             AnswerClear();
-            Console.WriteLine($"{player.PossessedItems[input + 1].Name}을(를) 판매하시겠습니까? (판매: 0, 취소: 1)");
+            AnswerClear();
+            AnswerClear();
+            AnswerClear();
+            Console.WriteLine($"{player.PossessedItems[input + 1].Name}을(를) 판매하시겠습니까?");
+            Console.WriteLine("1. 판매");
+            Console.WriteLine("0. 취소");
             Console.WriteLine();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
             Console.Write(">> ");
 
             int answer = CheckValidInput(0, 1);
-            if (answer == 1)
+            if (answer == 0)
             {
                 ItemSell();
             }
             else
             {
-                if (player.PossessedItems[input +  1].Equipped == true)
+                Item item = player.PossessedItems[input + 1];
+                if (item.Equipped == true)
                 {
-                    if (player.PossessedItems[input + 1].Type == Item.ItemType.Weapon) player.AddAtk = 0;
-                    else if (player.PossessedItems[input + 1].Type == Item.ItemType.Shield) player.AddDef = 0;
+                    if (item.Type == Item.ItemType.Weapon) player.AddAtk = 0;
+                    else if (item.Type == Item.ItemType.Shield) player.AddDef = 0;
                 }
 
-                player.Gold += (int)(player.PossessedItems[input + 1].Price * 0.85);
-                player.PossessedItems.RemoveAt(input + 1);
+                player.Gold += (int)(item.Price * 0.85);
 
+
+                if (item.Level == null)
+                {
+                    --item.Count;
+                    if (item.Count <= 0) player.PossessedItems.Remove(item);
+                }
+                else
+                {
+                    player.PossessedItems.Remove(item);
+                }
+
+                AnswerClear();
                 AnswerClear();
                 Console.WriteLine("판매가 완료되었습니다.");
                 Thread.Sleep(2000);
@@ -905,6 +936,7 @@ public class Character
     }
 }
 
+
 public class Item
 {
     public enum ItemType
@@ -934,7 +966,7 @@ public class Item
         Level = level;
         Price = price;
         Equipped = equipped;
-        Count = 1;
+        Count = 0;
     }
 }
 
@@ -964,6 +996,7 @@ class Store
         sweetJuice, midPotion, toxicMushroom
     };
 }
+
 
 class Dungeon
 {
