@@ -1,4 +1,3 @@
-using System;
 using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Numerics;
@@ -6,6 +5,13 @@ using System.Numerics;
 internal class Program
 {
     private static Character player;
+    static System.Timers.Timer restingTimer;
+    enum GameState
+    {
+        Playing,
+        Resting
+    }
+    static GameState status;
 
     static void Main(string[] args)
     {
@@ -17,6 +23,7 @@ internal class Program
     {
         // 캐릭터 정보 세팅
         player = new Character("Chad", "전사", 1, 10, 5, 100, 1500);
+        status = GameState.Playing;
 
         // 아이템 정보 세팅
         Item ironArmor = new Item("무쇠 갑옷", "방어력      +5", Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
@@ -32,16 +39,21 @@ internal class Program
         Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
         Console.WriteLine("이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다.");
         Console.WriteLine();
+
+        Console.WriteLine($"현재 모드: {status.ToString()}");
+        Console.WriteLine();
+
         Console.WriteLine("1. 상태 보기");
         Console.WriteLine("2. 인벤토리");
         Console.WriteLine("3. 상점");
-        Console.WriteLine("4. 던전 입장");
+        Console.WriteLine("4. 휴식하기");
+        Console.WriteLine("5. 던전 입장");
 
         Console.WriteLine();
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
-        int input = CheckValidInput(1, 4);
+        int input = CheckValidInput(1, 5);
         switch (input)
         {
             case 1:
@@ -55,7 +67,18 @@ internal class Program
                 DisplayStore();
                 break;
             case 4:
-                DisplayDungeon();
+                Resting();
+                break;
+            case 5:
+                if (status == GameState.Playing) DisplayDungeon();
+                else
+                {
+                    AnswerClear();
+                    Console.WriteLine("휴식 모드입니다.");
+                    Console.WriteLine("던전 입장을 원하시면 플레이 모드로 바꿔주세요.");
+                    Thread.Sleep(3000);
+                    DisplayGameIntro();
+                }
                 break;
         }
     }
@@ -449,7 +472,7 @@ internal class Program
 
     }
 
-  
+
     static void WritingItem(Item item)
     {
         Console.Write("               |");
@@ -468,6 +491,56 @@ internal class Program
         Console.SetCursorPosition(48, Console.CursorTop);
         Console.WriteLine($" {item.Desc} ");
     }
+
+
+    static void Resting()
+    {
+        Console.Clear();
+
+        Console.WriteLine("휴식하기");
+        Console.WriteLine("휴식 모드에서 통해 체력을 회복할 수 있습니다.");
+        Console.WriteLine();
+        Console.WriteLine($"현재 모드: {status.ToString()}");
+        Console.WriteLine();
+
+        if (status == GameState.Playing) Console.WriteLine("1. 휴식하기");
+        else Console.WriteLine("1. 휴식 중지");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, 1);
+
+        if (input == 0) DisplayGameIntro();
+        else if (status == GameState.Playing) StartRestingMode();
+        else QuitRestingMode();
+
+    }
+
+    static void StartRestingMode()
+    {
+        status = GameState.Resting;
+        restingTimer = new System.Timers.Timer(30000);
+        restingTimer.Elapsed += OnTimerEvent;
+        restingTimer.Start();
+        Resting();
+
+    }
+    static void QuitRestingMode()
+    {
+        restingTimer.Stop();
+        status = GameState.Playing;
+        Resting();
+    }
+
+    static void OnTimerEvent(Object source, System.Timers.ElapsedEventArgs e)
+    {
+        ++player.CurrentHp;
+        if (player.CurrentHp == player.Hp) QuitRestingMode();
+    }
+
 
     static void DisplayDungeon()
     {
@@ -523,7 +596,7 @@ internal class Program
         Console.WriteLine();
         Console.Write("던전에 입장하시겠습니까?");
 
-        if (dungeon.RecDef > player.Def + player.AddDef) Console.WriteLine("    (현재 방어력이 낮습니다.)");
+        if (dungeon.RecDef > player.Def + player.AddDef) Console.WriteLine("    현재 방어력이 낮습니다.");
         else Console.WriteLine();
 
         Console.WriteLine("1. 입장");
