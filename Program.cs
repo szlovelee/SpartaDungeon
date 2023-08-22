@@ -1,6 +1,7 @@
 using System;
 using System.Reflection.Emit;
 using System.Collections.Generic;
+using System.Numerics;
 
 internal class Program
 {
@@ -31,15 +32,16 @@ internal class Program
         Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
         Console.WriteLine("이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다.");
         Console.WriteLine();
-        Console.WriteLine("1. 상태보기");
+        Console.WriteLine("1. 상태 보기");
         Console.WriteLine("2. 인벤토리");
         Console.WriteLine("3. 상점");
+        Console.WriteLine("4. 던전 입장");
 
         Console.WriteLine();
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
-        int input = CheckValidInput(1, 3);
+        int input = CheckValidInput(1, 4);
         switch (input)
         {
             case 1:
@@ -51,6 +53,9 @@ internal class Program
                 break;
             case 3:
                 DisplayStore();
+                break;
+            case 4:
+                DisplayDungeon();
                 break;
         }
     }
@@ -66,7 +71,7 @@ internal class Program
         Console.WriteLine($"{player.Name}({player.Job})");
         Console.WriteLine($"공격력 : {player.Atk + player.AddAtk}");
         Console.WriteLine($"방어력 : {player.Def + player.AddDef}");
-        Console.WriteLine($"체력   : {player.Hp}");
+        Console.WriteLine($"체력   : {player.CurrentHp} / {player.Hp}");
         Console.WriteLine($"Gold   : {player.Gold} G");
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
@@ -176,7 +181,7 @@ internal class Program
         int input = CheckValidInput(0, player.PossessedItems.Count);
         if (input == 0)
         {
-            DisplayGameIntro();
+            DisplayInventory();
         }
         else
         {
@@ -264,7 +269,7 @@ internal class Program
         Console.WriteLine($"{player.Gold} G");
         Console.WriteLine();
 
-        Console.WriteLine("[아이템 목록]");
+        Console.WriteLine("[상품]");
 
         foreach (Item item in Store.StoreItems)
         {
@@ -316,7 +321,7 @@ internal class Program
         Console.WriteLine($"{player.Gold} G");
         Console.WriteLine();
 
-        Console.WriteLine("[아이템 목록]");
+        Console.WriteLine("[상품]");
 
         int count = 1;
         foreach (Item item in Store.StoreItems)
@@ -464,6 +469,125 @@ internal class Program
         Console.WriteLine($" {item.Desc} ");
     }
 
+    static void DisplayDungeon()
+    {
+        Console.Clear();
+
+        Console.WriteLine("던전 입장");
+        Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
+        Console.WriteLine();
+
+        Console.WriteLine($"나의 방어력: {player.Def + player.AddDef}");
+        Console.WriteLine();
+
+        Console.WriteLine("1. 난이도   ★☆☆   | 권장 방어력: 15");
+        Console.WriteLine("2. 난이도   ★★☆   | 권장 방어력: 40");
+        Console.WriteLine("3. 난이도   ★★★   | 권장 방어력: 55");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, 3);
+
+        switch (input)
+        {
+            case 0:
+                DisplayGameIntro();
+                break;
+            case 1:
+            case 2:
+            case 3:
+                EnteringDungeon(input);
+                break;
+        }
+
+    }
+
+    static void EnteringDungeon(int input)
+    {
+        Console.Clear();
+
+        Console.WriteLine("던전 입장");
+        Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
+        Console.WriteLine();
+
+        Console.WriteLine($"나의 방어력: {player.Def + player.AddDef}");
+        Console.WriteLine();
+
+        Dungeon dungeon = new Dungeon(input);
+
+        AnswerClear();
+        Console.WriteLine(dungeon.DungeonInfo);
+        Console.WriteLine();
+        Console.Write("던전에 입장하시겠습니까?");
+
+        if (dungeon.RecDef > player.Def + player.AddDef) Console.WriteLine("    (현재 방어력이 낮습니다.)");
+        else Console.WriteLine();
+
+        Console.WriteLine("1. 입장");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int answer = CheckValidInput(0, 1);
+        switch (answer)
+        {
+            case 0:
+                DisplayDungeon();
+                break;
+            case 1:
+                Console.Clear();
+                Console.WriteLine("전투 중...");
+                Thread.Sleep(5000);
+
+                FightEnd(dungeon);
+
+                break;
+
+        }
+    }
+
+    static void FightEnd(Dungeon dungeon)
+    {
+        Console.Clear();
+
+
+
+        Console.WriteLine("던전 탐험 결과");
+
+        if (dungeon.DungeonFight(player))
+        {
+            Console.WriteLine("던전 클리어");
+            Console.WriteLine();
+            Console.WriteLine("[탐험 보상]");
+            Console.WriteLine($"기본 보상 {dungeon.Reward} G");
+            Console.WriteLine($"추가 보상 {dungeon.AdditionalReward} G");
+        }
+        else
+        {
+            Console.WriteLine("던전 실패");
+
+        }
+
+        Console.WriteLine();
+        Console.WriteLine($"현재 체력 {player.CurrentHp} / {player.Hp}");
+
+        Console.WriteLine();
+        Console.WriteLine("0. 나가기");
+
+        Console.WriteLine();
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0,0);
+
+        if (input == 0) DisplayGameIntro();
+    }
+
+
     static int CheckValidInput(int min, int max)
     {
         while (true)
@@ -585,4 +709,63 @@ class Store
         potato, chicken, boyang,
         sweetJuice, midPotion, toxicMushroom
     };
+}
+
+class Dungeon
+{
+    public int RecDef { get; set; }
+    public int Reward { get; set; }
+    public int AdditionalReward { get; set; }
+    public string DungeonInfo { get; set; }
+
+    Random random = new Random();
+
+    public Dungeon(int stage)
+    {
+        switch (stage)
+        {
+            case 1:
+                RecDef = 15;
+                Reward = 1000;
+                DungeonInfo = "난이도   ★☆☆   | 권장 방어력: 15";
+                break;
+            case 2:
+                RecDef = 40;
+                Reward = 1700;
+                DungeonInfo = "난이도   ★★☆   | 권장 방어력: 40";
+                break;
+            case 3:
+                RecDef = 55;
+                Reward = 2500;
+                DungeonInfo = "난이도   ★★★   | 권장 방어력: 55";
+                break;
+        }
+    }
+
+
+    public bool DungeonFight(Character player)
+    {
+        if (player.Def + player.AddDef < RecDef)
+        {
+            int winProb = random.Next(1, 6);
+            if (winProb == 1 || winProb == 2)
+            {
+                player.CurrentHp = player.CurrentHp / 2;
+                return false;
+            }       
+        }
+
+        DungeonResult(player);
+        return true;
+    }
+
+
+    public void DungeonResult(Character player)
+    {
+        int defGap = (player.Def + player.AddDef) - RecDef;
+        player.CurrentHp -= random.Next(20 - defGap, 36 - defGap);
+
+        AdditionalReward = Reward * random.Next(player.Atk + player.AddAtk, (player.Atk + player.AddAtk) * 2 + 1) / 100;
+        player.Gold += Reward + AdditionalReward;
+    }
 }
