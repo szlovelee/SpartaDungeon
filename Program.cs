@@ -1,6 +1,7 @@
 using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Text.RegularExpressions;
 
 internal class Program
 {
@@ -155,13 +156,15 @@ internal class Program
 
         Console.WriteLine();
         Console.WriteLine("1. 장착 관리");
+        Console.WriteLine("2. 아이템 정렬");
+        Console.WriteLine("3. 아이템 강화");
         Console.WriteLine("0. 나가기");
         Console.WriteLine();
 
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
-        int input = CheckValidInput(0, 1);
+        int input = CheckValidInput(0, 3);
         switch (input)
         {
             case 0:
@@ -169,6 +172,12 @@ internal class Program
                 break;
             case 1:
                 EquipmentManager();
+                break;
+            case 2:
+                Organize();
+                break;
+            case 3:
+                ItemUpgrade();
                 break;
         }
     }
@@ -219,78 +228,213 @@ internal class Program
         else
         {
 
-            switch (player.PossessedItems[input - 1].Type)
+            EffectManager(player.PossessedItems[input - 1], false);
+            EquipmentManager();
+        }
+    }
+
+
+    static void Organize()
+    {
+
+    }
+
+
+    static void ItemUpgrade()
+    {
+        Console.Clear();
+
+        Console.WriteLine("인벤토리 - 아이템 강화");
+        Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+        Console.WriteLine();
+
+        Console.WriteLine($"체력 {player.CurrentHp} / {player.Hp}");
+        if (player.AddAtk != 0) Console.WriteLine($"공격력 {player.Atk} + {player.AddAtk}");
+        else Console.WriteLine($"공격력 {player.Atk}");
+        if (player.AddDef != 0) Console.WriteLine($"방어력 {player.Def} + {player.AddDef}");
+        else Console.WriteLine($"방어력 {player.Def}");
+        Console.WriteLine();
+
+        Console.WriteLine("[보유 골드]");
+        Console.WriteLine($"{player.Gold} G");
+        Console.WriteLine();
+
+        Console.WriteLine("[강화 가능한 아이템]");
+
+        List<Item> tempList = new List<Item>();
+        List<int> upgradeFee = new List<int>();
+
+        foreach (Item item in player.PossessedItems)
+        {
+            if (item.Level == null || item.Level == 5 || item.Price == 0) continue;
+
+            switch (item.Level)
             {
-                case Item.ItemType.Weapon:
-                    if (player.PossessedItems[input - 1].Equipped == false)
+                case 1:
+                    upgradeFee.Add((int)(item.Price * 0.1f));
+                    break;
+                case 2:
+                    upgradeFee.Add((int)(item.Price * 0.2f));
+
+                    break;
+                case 3:
+                    upgradeFee.Add((int)(item.Price * 0.5f));
+
+                    break;
+                case 4:
+                    upgradeFee.Add(item.Price * 2);
+                    break;
+            }
+
+            Console.Write($"{tempList.Count + 1}.");
+            if (item.Equipped) Console.Write("[E]");
+            else Console.Write("   ");
+            WritingItem(item);
+            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            Console.Write("          |");
+            Console.SetCursorPosition(86, Console.CursorTop);
+            Console.Write($" Lv. {item.Level} ");
+            Console.SetCursorPosition(97, Console.CursorTop);
+            Console.WriteLine($" {upgradeFee[tempList.Count]} G ");
+
+            tempList.Add(item);            
+        }
+
+        Console.WriteLine();
+
+        if (tempList.Count == 0)
+        {
+            Console.WriteLine("강화 가능한 아이템이 없습니다.");
+            Console.WriteLine();
+        }
+        else if (tempList.Count == 1) Console.WriteLine("1. 해당 아이템 강화");
+        else Console.WriteLine($"1 ~ {tempList.Count}. 해당 아이템 강화");
+
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, tempList.Count);
+
+        if (input == 0)
+        {
+            DisplayInventory();
+            return;
+        }
+        else
+        {
+            if (player.Gold >= upgradeFee[input - 1])
+            {
+                Item selected = tempList[input - 1];
+
+                int effect = (int)(int.Parse(Regex.Match(selected.Effect, @"\d+").Value) * 1.2f);
+
+                int changingIndex = player.PossessedItems.IndexOf(player.PossessedItems.Find(item => item.Name == selected.Name));
+                player.PossessedItems[changingIndex].Effect = Regex.Replace(selected.Effect, @"\d+", effect.ToString());
+                ++player.PossessedItems[changingIndex].Level;
+
+                player.Gold -= upgradeFee[input - 1];
+
+                EffectManager(player.PossessedItems[changingIndex], true);
+                AnswerClear();
+                Console.WriteLine("강화가 완료되었습니다.");
+                Thread.Sleep(2000);
+
+            }
+            else
+            {
+                AnswerClear();
+                Console.WriteLine("Gold가 부족합니다.");
+                Thread.Sleep(2000);
+            }
+            ItemUpgrade();
+        }
+    }
+
+    static void EffectManager(Item item, bool isUpgrade)
+    {
+        switch (item.Type)
+        {
+            case Item.ItemType.Weapon:
+                if (item.Equipped == true && !isUpgrade)
+                {
+                    player.AddAtk = 0;
+                    item.Equipped = false;
+                }
+                else 
+                {
+                    player.AddAtk = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                    if (!isUpgrade)
                     {
-                        player.AddAtk = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
                         int index1 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Weapon);
                         if (index1 != -1)
                         {
                             player.PossessedItems[index1].Equipped = false;
                         }
-                        player.PossessedItems[input - 1].Equipped = true;
-                    }
-                    else
-                    {
-                        player.AddAtk = 0;
-                        player.PossessedItems[input - 1].Equipped = false;
-                    }
-                    
-                    break;
+                        item.Equipped = true;
+                    }                    
+                }
 
-                case Item.ItemType.Shield:
-                    if (player.PossessedItems[input - 1].Equipped == false)
+                break;
+
+            case Item.ItemType.Shield:
+                if(item.Equipped == true && !isUpgrade)
+                {
+                    player.AddDef = 0;
+                    item.Equipped = false;
+                }
+                else
+                {
+                    player.AddDef = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                    if (!isUpgrade)
                     {
-                        player.AddDef = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
                         int index2 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Shield);
                         if (index2 != -1)
                         {
                             player.PossessedItems[index2].Equipped = false;
                         }
-                        player.PossessedItems[input - 1].Equipped = true;
+                        item.Equipped = true;
                     }
-                    else
-                    {
-                        player.AddDef = 0;
-                        player.PossessedItems[input - 1].Equipped = false;
-                    }
+                }
 
-                    break;
+                break;
 
-                case Item.ItemType.Food:
-                    int addedHp = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
-                    if (player.CurrentHp == player.Hp)
-                    {
-                        AnswerClear();
-                        Console.Write("이미 체력이 최대치입니다.");
-                        Thread.Sleep(2000);
-                    }
-                    else
-                    {
-                        if (player.CurrentHp + addedHp > player.Hp) player.CurrentHp = player.Hp;
-                        else player.CurrentHp += addedHp;
-                        player.PossessedItems.RemoveAt(input - 1);
-                    }
-                    break;
+            case Item.ItemType.Food:
+                int addedHp = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                if (player.CurrentHp == player.Hp)
+                {
+                    AnswerClear();
+                    Console.Write("이미 체력이 최대치입니다.");
+                    Thread.Sleep(2000);
+                }
+                else
+                {
+                    if (player.CurrentHp + addedHp > player.Hp) player.CurrentHp = player.Hp;
+                    else player.CurrentHp += addedHp;
+                    int index3 = player.PossessedItems.FindIndex(i => i.Name == item.Name);
+                    --player.PossessedItems[index3].Count;
+                    if (player.PossessedItems[index3].Count == 0) player.PossessedItems.RemoveAt(index3);
+                }
+                break;
 
-                case Item.ItemType.Potion:
-                    int AddHp = int.Parse(player.PossessedItems[input - 1].Effect.ToString().Split("+")[1]);
-                    if (player.CurrentHp == player.Hp)
-                    {
-                        player.CurrentHp += AddHp;
-                    }
-                    player.Hp += AddHp;
-                    player.PossessedItems.RemoveAt(input - 1);
-                    break;
-            }
-            EquipmentManager();
+            case Item.ItemType.Potion:
+                int AddHp = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                if (player.CurrentHp == player.Hp)
+                {
+                    player.CurrentHp += AddHp;
+                }
+                player.Hp += AddHp;
+                int index4 = player.PossessedItems.FindIndex(i => i.Name == item.Name);
+                --player.PossessedItems[index4].Count;
+                if (player.PossessedItems[index4].Count == 0) player.PossessedItems.RemoveAt(index4);
+                break;
         }
     }
 
-  
-    static void DisplayStore()
+
+    static void DisplayStore()          // 상점
     {
         Console.Clear();
 
@@ -778,6 +922,7 @@ public class Item
     public int? Level { get; set; }
     public int Price { get; }
     public bool Equipped { get; set; }
+    public int Count { get; set; }
 
 
     public Item(string name, string effect, ItemType type, string desc, int? level, int price, bool equipped)
@@ -789,6 +934,7 @@ public class Item
         Level = level;
         Price = price;
         Equipped = equipped;
+        Count = 1;
     }
 }
 
