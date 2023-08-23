@@ -1,7 +1,5 @@
 # SpartaDungeon
 
-## 구조 정리
-
 ## Program
 
 ### ⭐️ 기본 세팅
@@ -53,11 +51,54 @@
 
 ## Character
 
+### 필드 및 프로퍼티
+- **PossessedItems**
+- **Atk / AddAtk**
+- **Def / AddDef**
+- **Hp / CurrentHp**
+- **MaxExp / CurrentExp**
+- **Level**
+- Name, Job, Gold
+
+### 생성자
+
+
 ## Item
+
+### Enum과 프로퍼티
+- **enum ItemType**
+- **Level**
+- **Price / SellingPrice**
+- **Equipped**
+- **Count**
+- **Effect**
+- **EffectType**
+- Name / Desc / Equipped
+
+  
+### 생성자
 
 ## Store
 
+### Item / StoreItems
+- Item 객체 생성
+- **StoreItems**
+
 ## Dungeon
+
+### 프로퍼티
+- RecDef
+- Reward
+- **AdditionalReward**
+- DungeonInfo
+- RewardExp
+
+### 생성자
+- switch문 활용
+
+### 메서드
+- **DungeonFight()**
+- **DungeonResult()**
 
 
 
