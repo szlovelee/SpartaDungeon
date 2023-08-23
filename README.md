@@ -49,6 +49,8 @@
 - CheckVailidInput()
 - **AnswerClear()** : 입력되어 콘솔에 남은 내용을 지워야 하는 경우가 많아 추가한 메서드.
 
+
+
 ## Character
 
 ### 필드 및 프로퍼티
@@ -61,6 +63,7 @@
 - Name, Job, Gold
 
 ### 생성자
+
 
 
 ## Item
@@ -78,11 +81,15 @@
   
 ### 생성자
 
+
+
 ## Store
 
 ### Item / StoreItems
 - Item 객체 생성
 - **StoreItems**
+
+
 
 ## Dungeon
 
