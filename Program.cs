@@ -2,6 +2,7 @@ using System.Reflection.Emit;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using System;
 
 internal class Program
 {
@@ -46,12 +47,22 @@ internal class Program
     static void DisplayGameIntro()  //시작화면
     {
         Console.Clear();
-
-        Console.WriteLine("스파르타 마을에 오신 여러분 환영합니다.");
-        Console.WriteLine("이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다.");
+        Console.BackgroundColor = ConsoleColor.Yellow;
+        Console.ForegroundColor = ConsoleColor.DarkBlue;
+        Console.WriteLine("  -------------------------------------------------------  ");
+        Console.WriteLine(" |                                                       | ");
+        Console.WriteLine(" |        스파르타 마을에 오신 여러분 환영합니다.        | ");
+        Console.WriteLine(" |  이곳에서 전전으로 들어가기 전 활동을 할 수 있습니다. | ");
+        Console.WriteLine(" |                                                       | ");
+        Console.WriteLine("  -------------------------------------------------------  ");
+        Console.ResetColor();
         Console.WriteLine();
 
-        Console.WriteLine($"현재 모드: {status.ToString()}");
+        Console.Write("현재 모드 : ");
+        if (status == GameState.Playing) Console.ForegroundColor = ConsoleColor.DarkGreen;
+        else Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine(status.ToString());
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("1. 상태 보기");
@@ -61,10 +72,13 @@ internal class Program
         Console.WriteLine("5. 던전 입장");
 
         Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(1, 5);
+        Console.ResetColor();
         switch (input)
         {
             case 1:
@@ -78,14 +92,25 @@ internal class Program
                 DisplayStore();
                 break;
             case 4:
-                Resting();
-                break;
+                if (player.CurrentHp == player.Hp)
+                {
+                    AnswerClear();
+                    Console.ForegroundColor = ConsoleColor.DarkCyan;
+                    Console.WriteLine("현재 체력이 최대치입니다.");
+                    Console.ResetColor();
+                    Thread.Sleep(3000);
+                    DisplayGameIntro();
+                }
+                else
+                Resting(); break;
             case 5:
                 if (status == GameState.Resting)
                 {
                     AnswerClear();
+                    Console.ForegroundColor = ConsoleColor.DarkCyan;
                     Console.WriteLine("휴식 모드입니다.");
                     Console.WriteLine("던전 입장을 원하시면 플레이 모드로 바꿔주세요.");
+                    Console.ResetColor();
                     Thread.Sleep(3000);
                     DisplayGameIntro();
                 }
@@ -106,29 +131,49 @@ internal class Program
     static void DisplayMyInfo()     // 상태보기
     {
         Console.Clear();
-
-        Console.WriteLine("상태보기");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ----------  ");
+        Console.WriteLine(" | 상태보기 | ");
+        Console.WriteLine("  ----------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("캐릭터의 정보르 표시합니다.");
+        Console.ResetColor();
         Console.WriteLine();
         Console.WriteLine($"Lv.{player.Level}");
+        Console.ForegroundColor = ConsoleColor.DarkCyan;
         Console.WriteLine($"exp({player.CurrentExp} / {player.MaxExp})");
+        Console.ResetColor();
         Console.WriteLine("----------------------------------");
         Console.WriteLine($"{player.Name}({player.Job})");
         Console.WriteLine();
-        Console.WriteLine($"체력   : {player.CurrentHp} / {player.Hp}");
+        Console.Write("체력   : ");
+        if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
+        else Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write(player.CurrentHp);
+        Console.ResetColor();
+        Console.WriteLine($" / {player.Hp}");
         Console.WriteLine($"공격력 : {player.Atk + player.AddAtk}");
         Console.WriteLine($"방어력 : {player.Def + player.AddDef}");
         Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine($"Gold   : {player.Gold} G");
         Console.ResetColor();
         Console.WriteLine();
+
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 0);
+        Console.ResetColor();
         switch (input)
         {
             case 0:
@@ -141,11 +186,23 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("인벤토리");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ----------  ");
+        Console.WriteLine(" | 인벤토리 | ");
+        Console.WriteLine("  ----------  ");
+        Console.ResetColor();
+
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
-        Console.WriteLine($"체력 {player.CurrentHp} / {player.Hp}");
+        Console.Write("체력   : ");
+        if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
+        else Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write(player.CurrentHp);
+        Console.ResetColor();
+        Console.WriteLine($" / {player.Hp}");
         if (player.AddAtk != 0) Console.WriteLine($"공격력 {player.Atk} + {player.AddAtk}");
         else Console.WriteLine($"공격력 {player.Atk}");
         if (player.AddDef != 0) Console.WriteLine($"방어력 {player.Def} + {player.AddDef}");
@@ -155,7 +212,7 @@ internal class Program
 
 
         Console.WriteLine("[아이템 목록]");
-
+        Console.WriteLine();
 
         foreach (Item item in player.PossessedItems)
         {
@@ -167,18 +224,27 @@ internal class Program
             if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
             else Console.WriteLine($" 보유: {item.Count} 개 ");
         }
+        Console.WriteLine();
+
 
         Console.WriteLine();
         Console.WriteLine("1. 장착 관리");
         Console.WriteLine("2. 아이템 정렬 설정");
         Console.WriteLine("3. 아이템 강화");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 3);
+        Console.ResetColor();
+
         switch (input)
         {
             case 0:
@@ -200,11 +266,22 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("인벤토리 - 장착 관리");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ----------------------  ");
+        Console.WriteLine(" | 인벤토리 - 장착 관리 | ");
+        Console.WriteLine("  ----------------------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
-        Console.WriteLine($"체력 {player.CurrentHp} / {player.Hp}");
+        Console.Write("체력   : ");
+        if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
+        else Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write(player.CurrentHp);
+        Console.ResetColor();
+        Console.WriteLine($" / {player.Hp}");
         if (player.AddAtk != 0) Console.WriteLine($"공격력 {player.Atk} + {player.AddAtk}");
         else Console.WriteLine($"공격력 {player.Atk}");
         if (player.AddDef != 0) Console.WriteLine($"방어력 {player.Def} + {player.AddDef}");
@@ -212,6 +289,7 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[아이템 목록]");
+        Console.WriteLine();
 
         int count = 1;
         foreach (Item item in player.PossessedItems)
@@ -224,17 +302,26 @@ internal class Program
             if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
             else Console.WriteLine($" 보유: {item.Count} 개 ");
         }
+        Console.WriteLine();
+
 
         Console.WriteLine();
         Console.WriteLine($"1 ~ {player.PossessedItems.Count}. 해당 아이템 장착 및 소모");
 
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, player.PossessedItems.Count);
+        Console.ResetColor();
+
         if (input == 0)
         {
             DisplayInventory();
@@ -251,22 +338,36 @@ internal class Program
     static void Organize()
     {
         Console.Clear();
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine(" -----------------------------  ");
+        Console.WriteLine(" | 인벤토리 - 아이템 정렬 설정 | ");
+        Console.WriteLine("  -----------------------------  ");
+        Console.ResetColor();
 
-        Console.WriteLine("인벤토리 - 아이템 정렬 설정");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
+
         Console.WriteLine($"현재 모드: {organize.ToString()}");
         Console.WriteLine();
 
+        Console.WriteLine();
         if (organize == InventoryMode.ItemType) Console.WriteLine("1. 레벨순으로 정렬하기");
         else Console.WriteLine("1. 종류별로 정렬하기");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 1);
+        Console.ResetColor();
 
         if (input == 0)
         {
@@ -312,11 +413,22 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("인벤토리 - 아이템 강화");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ------------------------  ");
+        Console.WriteLine(" | 인벤토리 - 아이템 강화 | ");
+        Console.WriteLine("  ------------------------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
-        Console.WriteLine($"체력 {player.CurrentHp} / {player.Hp}");
+        Console.Write("체력   : ");
+        if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
+        else Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write(player.CurrentHp);
+        Console.ResetColor();
+        Console.WriteLine($" / {player.Hp}");
         if (player.AddAtk != 0) Console.WriteLine($"공격력 {player.Atk} + {player.AddAtk}");
         else Console.WriteLine($"공격력 {player.Atk}");
         if (player.AddDef != 0) Console.WriteLine($"방어력 {player.Def} + {player.AddDef}");
@@ -330,6 +442,7 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[강화 가능한 아이템]");
+        Console.WriteLine();
 
         List<Item> tempList = new List<Item>();
         List<int> upgradeFee = new List<int>();
@@ -371,22 +484,38 @@ internal class Program
         }
 
         Console.WriteLine();
-
         if (tempList.Count == 0)
         {
+            Console.ForegroundColor = ConsoleColor.Gray;
             Console.WriteLine("강화 가능한 아이템이 없습니다.");
+            Console.ResetColor();
+            Console.WriteLine();
             Console.WriteLine();
         }
-        else if (tempList.Count == 1) Console.WriteLine("1. 해당 아이템 강화");
-        else Console.WriteLine($"1 ~ {tempList.Count}. 해당 아이템 강화");
+        else if (tempList.Count == 1)
+        {
+            Console.WriteLine();
+            Console.WriteLine("1. 해당 아이템 강화");
+        }
+        else
+        {
+            Console.WriteLine();
+            Console.WriteLine($"1 ~ {tempList.Count}. 해당 아이템 강화");
+        }
 
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, tempList.Count);
+        Console.ResetColor();
 
         if (input == 0)
         {
@@ -412,7 +541,9 @@ internal class Program
                 SortItems();
 
                 AnswerClear();
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("강화가 완료되었습니다.");
+                Console.ResetColor();
                 Thread.Sleep(2000);
 
             }
@@ -513,8 +644,14 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("상점");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ------  ");
+        Console.WriteLine(" | 상점 | ");
+        Console.WriteLine("  ------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
@@ -524,6 +661,7 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[상품]");
+        Console.WriteLine();
 
         foreach (Item item in Store.StoreItems)
         {
@@ -534,17 +672,25 @@ internal class Program
             else Console.WriteLine($" {item.Price} G ");
 
         }
+        Console.WriteLine();
 
         Console.WriteLine();
         Console.WriteLine("1. 아이템 구매");
         Console.WriteLine("2. 아이템 판매");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 2);
+        Console.ResetColor();
+
         switch (input)
         {
             case 0:
@@ -563,8 +709,14 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("상점 - 아이템 구매");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  --------------------  ");
+        Console.WriteLine(" | 상점 - 아이템 구매 | ");
+        Console.WriteLine("  --------------------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
@@ -574,6 +726,7 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[상품]");
+        Console.WriteLine();
 
         int count = 1;
         foreach (Item item in Store.StoreItems)
@@ -587,20 +740,29 @@ internal class Program
             if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
             else Console.WriteLine($" {item.Price} G ");
         }
+        Console.WriteLine();
 
         Console.WriteLine();
         Console.WriteLine("1 ~ 12. 해당 아이템 구매");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 12);
+        Console.ResetColor();
+       
         if (input == 0) DisplayStore();
         else if (player.PossessedItems.IndexOf(Store.StoreItems[input - 1]) != -1 && Store.StoreItems[input - 1].Level != null)
         {
             AnswerClear();
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("이미 구매한 아이템입니다.");
             Thread.Sleep(2000);
 
@@ -608,6 +770,7 @@ internal class Program
         else if (Store.StoreItems[input - 1].Price <= player.Gold)
         {
             AnswerClear();
+            Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("구매를 완료했습니다.");
 
             Item item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
@@ -636,15 +799,21 @@ internal class Program
             Thread.Sleep(2000);
 
         }
+        Console.ResetColor();
         ItemBuy();
     }
 
     static void ItemSell()
     {
         Console.Clear();
-
-        Console.WriteLine("상점 - 아이템 판매");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  --------------------  ");
+        Console.WriteLine(" | 상점 - 아이템 판매 | ");
+        Console.WriteLine("  --------------------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("필요한 아이템을 얻을 수 있는 상점입니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
@@ -654,6 +823,7 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[보유 아이템]");
+        Console.WriteLine();
 
         if (player.PossessedItems.Count <= 2)
         {
@@ -696,19 +866,28 @@ internal class Program
                 Console.SetCursorPosition(102, Console.CursorTop);
                 Console.WriteLine($" {item.SellignPrice} G ");
             }
+            Console.WriteLine();
+
 
             Console.WriteLine();
             if (player.PossessedItems.Count == 3) Console.WriteLine("1. 해당 아이템 판매");
             else Console.WriteLine($"1 ~ {player.PossessedItems.Count - 2}. 해당 아이템 판매");
         }
 
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, player.PossessedItems.Count - 2);
+        Console.ResetColor();
+
         if (input == 0) DisplayStore();
         else
         {
@@ -757,7 +936,9 @@ internal class Program
 
                 AnswerClear();
                 AnswerClear();
+                Console.ForegroundColor = ConsoleColor.Green;
                 Console.WriteLine("판매가 완료되었습니다.");
+                Console.ResetColor();
                 Thread.Sleep(2000);
             }
 
@@ -787,21 +968,38 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("휴식하기");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ----------  ");
+        Console.WriteLine(" | 휴식하기 | ");
+        Console.WriteLine("  ----------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("휴식 모드에서 통해 체력을 회복할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
-        Console.WriteLine($"현재 모드: {status.ToString()}");
+        Console.Write("현재 모드 : ");
+        if (status == GameState.Playing) Console.ForegroundColor = ConsoleColor.DarkGreen;
+        else Console.ForegroundColor = ConsoleColor.DarkCyan;
+        Console.WriteLine(status.ToString());
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
         if (status == GameState.Playing) Console.WriteLine("1. 휴식하기");
         else Console.WriteLine("1. 휴식 중지");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
+        Console.ResetColor();
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 1);
+        Console.ResetColor();
 
         if (input == 0) DisplayGameIntro();
         else if (status == GameState.Playing) StartRestingMode();
@@ -836,8 +1034,14 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("던전 입장");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  -----------   ");
+        Console.WriteLine(" | 던전 입장 | ");
+        Console.WriteLine("  -----------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine($"나의 방어력: {player.Def + player.AddDef}");
@@ -846,13 +1050,22 @@ internal class Program
         Console.WriteLine("1. 난이도   ★☆☆   | 권장 방어력: 15");
         Console.WriteLine("2. 난이도   ★★☆   | 권장 방어력: 40");
         Console.WriteLine("3. 난이도   ★★★   | 권장 방어력: 55");
-        Console.WriteLine("0. 나가기");
         Console.WriteLine();
 
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("0. 나가기");
+        Console.ResetColor();
+        Console.WriteLine();
+
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0, 3);
+        Console.ResetColor();
 
         switch (input)
         {
@@ -872,8 +1085,14 @@ internal class Program
     {
         Console.Clear();
 
-        Console.WriteLine("던전 입장");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  -----------  ");
+        Console.WriteLine(" | 던전 입장 | ");
+        Console.WriteLine("  -----------  ");
+        Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("이곳에서 던전으로 들어가기 전 활동을 할 수 있습니다.");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine($"나의 방어력: {player.Def + player.AddDef}");
@@ -892,13 +1111,22 @@ internal class Program
         Console.ResetColor();
         Console.WriteLine();
 
-        Console.WriteLine("1. 입장");
-        Console.WriteLine("0. 나가기");
         Console.WriteLine();
+        Console.WriteLine("1. 입장");
+        Console.ForegroundColor = ConsoleColor.DarkGray;
+        Console.WriteLine("0. 나가기");
+        Console.ResetColor();
+        Console.WriteLine();
+
+        Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int answer = CheckValidInput(0, 1);
+        Console.ResetColor();
+
         switch (answer)
         {
             case 0:
@@ -920,9 +1148,11 @@ internal class Program
     {
         Console.Clear();
 
-
-
-        Console.WriteLine("던전 탐험 결과");
+        Console.BackgroundColor = ConsoleColor.Magenta;
+        Console.WriteLine("  ----------------  ");
+        Console.WriteLine(" | 던전 탐험 결과 | ");
+        Console.WriteLine("  ----------------  ");
+        Console.ResetColor();
         Console.WriteLine();
 
         if (dungeon.DungeonFight(player))
@@ -956,16 +1186,26 @@ internal class Program
         }
 
         Console.WriteLine();
-        Console.WriteLine($"현재 체력 {player.CurrentHp} / {player.Hp}");
+        Console.Write("현재 체력 ");
+        if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
+        else Console.ForegroundColor = ConsoleColor.Red;
+        Console.Write(player.CurrentHp);
+        Console.ResetColor();
+        Console.WriteLine($" / {player.Hp}");
 
         Console.WriteLine();
+        Console.ForegroundColor = ConsoleColor.DarkGray;
         Console.WriteLine("0. 나가기");
-
+        Console.ResetColor();
         Console.WriteLine();
+
+        Console.ForegroundColor = ConsoleColor.Blue;
+        Console.WriteLine("------------------------------");
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
         int input = CheckValidInput(0,0);
+        Console.ResetColor();
 
         if (input == 0) DisplayGameIntro();
     }
@@ -988,6 +1228,7 @@ internal class Program
         while (true)
         {
             string input = Console.ReadLine();
+            Console.ResetColor();
 
             bool parseSuccess = int.TryParse(input, out var ret);
             if (parseSuccess)
@@ -1001,7 +1242,11 @@ internal class Program
             Console.Write("잘못된 입력입니다.");
             Console.ResetColor();
             Thread.Sleep(2000);
+
             AnswerClear();
+            AnswerClear();
+            Console.ForegroundColor = ConsoleColor.Blue;
+            Console.WriteLine("------------------------------");
             Console.WriteLine("원하시는 행동을 입력해주세요.");
             Console.Write(">> ");
         }
