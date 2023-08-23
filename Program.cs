@@ -7,11 +7,20 @@ internal class Program
 {
     private static Character player;
     static System.Timers.Timer restingTimer;
+
     enum GameState
     {
         Playing,
         Resting
     }
+
+    enum InventoryMode
+    {
+        ItemLevel,
+        ItemType
+    }
+
+    static InventoryMode organize; 
     static GameState status;
 
     static void Main(string[] args)
@@ -27,10 +36,11 @@ internal class Program
         status = GameState.Playing;
 
         // 아이템 정보 세팅
-        Item ironArmor = new Item("무쇠 갑옷", "방어력      +5", Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
-        Item oldSword = new Item("낡은 검", "공격력      +2", Item.ItemType.Weapon, "쉽게 볼 수 있는 낡은 검입니다.", 1, 0, false);
+        Item ironArmor = new Item("무쇠 갑옷", 5, Item.ItemType.Shield, "무쇠로 만들어져 튼튼한 갑옷입니다.", 1, 0, false);
+        Item oldSword = new Item("낡은 검", 2, Item.ItemType.Weapon, "쉽게 볼 수 있는 낡은 검입니다.", 1, 0, false);
 
-    player.PossessedItems = new List<Item> { ironArmor, oldSword };
+        player.PossessedItems = new List<Item> { ironArmor, oldSword };
+        SortItems();
     }
 
     static void DisplayGameIntro()  //시작화면
@@ -82,7 +92,9 @@ internal class Program
                 else if (player.CurrentHp == 0)
                 {
                     AnswerClear();
+                    Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine("체력이 부족합니다. 휴식을 취하거나 음식을 섭취한 후 다시 시도하세요.");
+                    Console.ResetColor();
                     Thread.Sleep(3000);
                     DisplayGameIntro();
                 }
@@ -106,7 +118,9 @@ internal class Program
         Console.WriteLine($"체력   : {player.CurrentHp} / {player.Hp}");
         Console.WriteLine($"공격력 : {player.Atk + player.AddAtk}");
         Console.WriteLine($"방어력 : {player.Def + player.AddDef}");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine($"Gold   : {player.Gold} G");
+        Console.ResetColor();
         Console.WriteLine();
         Console.WriteLine("0. 나가기");
         Console.WriteLine();
@@ -149,14 +163,14 @@ internal class Program
             if (item.Equipped) Console.Write("[E]");
             else Console.Write("   ");
             WritingItem(item);
-            Console.SetCursorPosition(86, Console.CursorTop -1);
+            Console.SetCursorPosition(88, Console.CursorTop -1);
             if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
             else Console.WriteLine($" 보유: {item.Count} 개 ");
         }
 
         Console.WriteLine();
         Console.WriteLine("1. 장착 관리");
-        Console.WriteLine("2. 아이템 정렬");
+        Console.WriteLine("2. 아이템 정렬 설정");
         Console.WriteLine("3. 아이템 강화");
         Console.WriteLine("0. 나가기");
         Console.WriteLine();
@@ -206,7 +220,7 @@ internal class Program
             if (item.Equipped) Console.Write("[E]");
             else Console.Write("   ");
             WritingItem(item);
-            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            Console.SetCursorPosition(88, Console.CursorTop - 1);
             if (item.Level != null) Console.WriteLine($" Lv. {item.Level} ");
             else Console.WriteLine($" 보유: {item.Count} 개 ");
         }
@@ -227,8 +241,8 @@ internal class Program
         }
         else
         {
-
             EffectManager(player.PossessedItems[input - 1], false);
+            SortItems();
             EquipmentManager();
         }
     }
@@ -236,7 +250,61 @@ internal class Program
 
     static void Organize()
     {
+        Console.Clear();
 
+        Console.WriteLine("인벤토리 - 아이템 정렬 설정");
+        Console.WriteLine("보유 중인 아이템을 관리할 수 있습니다.");
+        Console.WriteLine();
+        Console.WriteLine($"현재 모드: {organize.ToString()}");
+        Console.WriteLine();
+
+        if (organize == InventoryMode.ItemType) Console.WriteLine("1. 레벨순으로 정렬하기");
+        else Console.WriteLine("1. 종류별로 정렬하기");
+        Console.WriteLine("0. 나가기");
+        Console.WriteLine();
+
+        Console.WriteLine("원하시는 행동을 입력해주세요.");
+        Console.Write(">> ");
+
+        int input = CheckValidInput(0, 1);
+
+        if (input == 0)
+        {
+            DisplayInventory();
+            return;
+        }
+        else if (organize == InventoryMode.ItemType)
+        {
+            organize = InventoryMode.ItemLevel;
+            SortItems();
+            DisplayInventory();
+            return;
+        }
+        else
+        {
+            organize = InventoryMode.ItemType;
+            SortItems();
+            DisplayInventory();
+            return;
+        }
+    }
+
+    static void SortItems()
+    {
+        if (organize == InventoryMode.ItemType)
+        {
+            player.PossessedItems = player.PossessedItems.OrderByDescending(i => i.Equipped)
+                .ThenBy(i => i.Type)
+                .ThenByDescending(i => i.Effect)
+                .ToList();
+        }
+        else
+        {
+            player.PossessedItems = player.PossessedItems.OrderByDescending(i => i.Equipped)
+               .ThenByDescending(i => i.Level)
+               .ThenBy(i => i.Type)
+               .ToList();
+        }
     }
 
 
@@ -256,7 +324,9 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine($"{player.Gold} G");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[강화 가능한 아이템]");
@@ -282,7 +352,7 @@ internal class Program
 
                     break;
                 case 4:
-                    upgradeFee.Add(item.Price * 2);
+                    upgradeFee.Add(item.Price);
                     break;
             }
 
@@ -290,11 +360,11 @@ internal class Program
             if (item.Equipped) Console.Write("[E]");
             else Console.Write("   ");
             WritingItem(item);
-            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            Console.SetCursorPosition(88, Console.CursorTop - 1);
             Console.Write("          |");
-            Console.SetCursorPosition(86, Console.CursorTop);
+            Console.SetCursorPosition(88, Console.CursorTop);
             Console.Write($" Lv. {item.Level} ");
-            Console.SetCursorPosition(97, Console.CursorTop);
+            Console.SetCursorPosition(99, Console.CursorTop);
             Console.WriteLine($" {upgradeFee[tempList.Count]} G ");
 
             tempList.Add(item);            
@@ -329,15 +399,18 @@ internal class Program
             {
                 Item selected = tempList[input - 1];
 
-                int effect = (int)(int.Parse(Regex.Match(selected.Effect, @"\d+").Value) * 1.2f);
+                int effect = (int)(selected.Effect * 1.2f);
 
                 int changingIndex = player.PossessedItems.IndexOf(player.PossessedItems.Find(item => item.Name == selected.Name));
-                player.PossessedItems[changingIndex].Effect = Regex.Replace(selected.Effect, @"\d+", effect.ToString());
+                player.PossessedItems[changingIndex].Effect = effect;
                 ++player.PossessedItems[changingIndex].Level;
 
                 player.Gold -= upgradeFee[input - 1];
 
                 EffectManager(player.PossessedItems[changingIndex], true);
+
+                SortItems();
+
                 AnswerClear();
                 Console.WriteLine("강화가 완료되었습니다.");
                 Thread.Sleep(2000);
@@ -346,7 +419,9 @@ internal class Program
             else
             {
                 AnswerClear();
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Gold가 부족합니다.");
+                Console.ResetColor();
                 Thread.Sleep(2000);
             }
             ItemUpgrade();
@@ -365,7 +440,7 @@ internal class Program
                 }
                 else 
                 {
-                    player.AddAtk = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                    player.AddAtk = item.Effect;
                     if (!isUpgrade)
                     {
                         int index1 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Weapon);
@@ -387,7 +462,7 @@ internal class Program
                 }
                 else
                 {
-                    player.AddDef = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                    player.AddDef = item.Effect;
                     if (!isUpgrade)
                     {
                         int index2 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Shield);
@@ -402,7 +477,7 @@ internal class Program
                 break;
 
             case Item.ItemType.Food:
-                int addedHp = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                int addedHp = item.Effect;
                 if (player.CurrentHp == player.Hp)
                 {
                     AnswerClear();
@@ -420,7 +495,7 @@ internal class Program
                 break;
 
             case Item.ItemType.Potion:
-                int AddHp = int.Parse(Regex.Match(item.Effect, @"\d+").Value);
+                int AddHp = item.Effect;
                 if (player.CurrentHp == player.Hp)
                 {
                     player.CurrentHp += AddHp;
@@ -443,7 +518,9 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine($"{player.Gold} G");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[상품]");
@@ -452,11 +529,9 @@ internal class Program
         {
             Console.Write("-    ");
             WritingItem(item);
-            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            Console.SetCursorPosition(88, Console.CursorTop - 1);
             if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
             else Console.WriteLine($" {item.Price} G ");
-            
-
 
         }
 
@@ -482,8 +557,6 @@ internal class Program
                 ItemSell();
                 break;
         }
-
-
     }
 
     static void ItemBuy()
@@ -495,7 +568,9 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine($"{player.Gold} G");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[상품]");
@@ -503,10 +578,11 @@ internal class Program
         int count = 1;
         foreach (Item item in Store.StoreItems)
         {
-            Console.Write("-  ");
-            Console.Write($"{count++}.");
+            Console.Write("-    ");            
             WritingItem(item);
-            Console.SetCursorPosition(86, Console.CursorTop - 1);
+            Console.SetCursorPosition(3, Console.CursorTop - 1);
+            Console.Write($"{count++}.");
+            Console.SetCursorPosition(88, Console.CursorTop);
 
             if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
             else Console.WriteLine($" {item.Price} G ");
@@ -546,7 +622,7 @@ internal class Program
                 ++item.Count;
             }
             player.Gold -= Store.StoreItems[input - 1].Price;
-
+            SortItems();
 
             Thread.Sleep(2000);
 
@@ -554,7 +630,9 @@ internal class Program
         else if (Store.StoreItems[input - 1].Price > player.Gold)
         {
             AnswerClear();
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("Gold가 부족합니다.");
+            Console.ResetColor();
             Thread.Sleep(2000);
 
         }
@@ -570,7 +648,9 @@ internal class Program
         Console.WriteLine();
 
         Console.WriteLine("[보유 골드]");
+        Console.ForegroundColor = ConsoleColor.DarkYellow;
         Console.WriteLine($"{player.Gold} G");
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("[보유 아이템]");
@@ -589,8 +669,32 @@ internal class Program
                 Console.Write("-  ");
                 Console.Write($"{count++}.");
                 WritingItem(item);
-                Console.SetCursorPosition(86, Console.CursorTop - 1);
-                Console.WriteLine($" {(int)(item.Price * 0.85)} G ");
+                Console.SetCursorPosition(88, Console.CursorTop - 1);
+                Console.Write("             |");
+                Console.SetCursorPosition(88, Console.CursorTop);
+                if (item.Level != null) Console.Write($" Lv. {item.Level} ");
+                else Console.Write($" 보유: {item.Count} 개 ");
+
+                switch (item.Level)
+                {
+                    case 2:
+                        item.SellignPrice = (int)(item.Price * 0.95);
+                        break;
+                    case 3:
+                        item.SellignPrice = item.Price;
+                        break;
+                    case 4:
+                        item.SellignPrice = (int)(item.Price * 1.2);
+                        break;
+                    case 5:
+                        item.SellignPrice = (int)(item.Price * 1.7);
+                        break;
+                    default:
+                        item.SellignPrice = (int)(item.Price * 0.85);
+                        break;
+                }
+                Console.SetCursorPosition(102, Console.CursorTop);
+                Console.WriteLine($" {item.SellignPrice} G ");
             }
 
             Console.WriteLine();
@@ -612,7 +716,12 @@ internal class Program
             AnswerClear();
             AnswerClear();
             AnswerClear();
-            Console.WriteLine($"{player.PossessedItems[input + 1].Name}을(를) 판매하시겠습니까?");
+            Console.Write($"{player.PossessedItems[input + 1].Name}을(를) 판매하시겠습니까?");
+            Console.ForegroundColor = ConsoleColor.Red;
+            if (player.PossessedItems[input + 1].Level > 1) Console.WriteLine(" 강화 완료된 아이템입니다.");
+            else Console.WriteLine();
+            Console.ResetColor();
+            
             Console.WriteLine("1. 판매");
             Console.WriteLine("0. 취소");
             Console.WriteLine();
@@ -633,7 +742,7 @@ internal class Program
                     else if (item.Type == Item.ItemType.Shield) player.AddDef = 0;
                 }
 
-                player.Gold += (int)(item.Price * 0.85);
+                player.Gold += item.SellignPrice;
 
 
                 if (item.Level == null)
@@ -660,21 +769,17 @@ internal class Program
 
     static void WritingItem(Item item)
     {
-        Console.Write("               |");
-        Console.SetCursorPosition(5, Console.CursorTop);
-        Console.Write($" {item.Name} ");
-        Console.SetCursorPosition(21, Console.CursorTop);
-        Console.Write("        |");
-        Console.SetCursorPosition(21, Console.CursorTop);
-        Console.Write($" {item.Type.ToString()} ");
-        Console.SetCursorPosition(30, Console.CursorTop);
-        Console.Write("                 |");
-        Console.SetCursorPosition(30, Console.CursorTop);
-        Console.Write($" {item.Effect}");
-        Console.SetCursorPosition(48, Console.CursorTop);
-        Console.Write("                                    |");
-        Console.SetCursorPosition(48, Console.CursorTop);
-        Console.WriteLine($" {item.Desc} ");
+        Console.Write("                 |        |                  |                                    |");
+        Console.SetCursorPosition(7, Console.CursorTop);
+        Console.Write($" {item.Name}");
+        Console.SetCursorPosition(23, Console.CursorTop);
+        Console.Write($" {item.Type.ToString()}");
+        Console.SetCursorPosition(32, Console.CursorTop);
+        Console.Write($" {item.EffectType}");
+        Console.SetCursorPosition(44, Console.CursorTop);
+        Console.Write($" + {item.Effect}");
+        Console.SetCursorPosition(51, Console.CursorTop);
+        Console.WriteLine($" {item.Desc}");
     }
 
 
@@ -781,8 +886,10 @@ internal class Program
         Console.WriteLine();
         Console.Write("던전에 입장하시겠습니까?");
 
+        Console.ForegroundColor = ConsoleColor.Red;
         if (dungeon.RecDef > player.Def + player.AddDef) Console.WriteLine("    현재 방어력이 낮습니다.");
         else Console.WriteLine();
+        Console.ResetColor();
         Console.WriteLine();
 
         Console.WriteLine("1. 입장");
@@ -816,25 +923,35 @@ internal class Program
 
 
         Console.WriteLine("던전 탐험 결과");
+        Console.WriteLine();
 
         if (dungeon.DungeonFight(player))
         {
             LevelControl(dungeon);
+            Console.BackgroundColor = ConsoleColor.Yellow;
             Console.WriteLine("던전 클리어");
+            Console.ResetColor();
             Console.WriteLine();
             Console.WriteLine("[탐험 보상]");
+            Console.ForegroundColor = ConsoleColor.DarkYellow;
             Console.WriteLine($"기본 보상 {dungeon.Reward} G");
             Console.WriteLine($"추가 보상 {dungeon.AdditionalReward} G");
+            Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine($"exp +{dungeon.RewardExp}");
             if (player.CurrentExp == 0)
             {
                 Console.WriteLine();
+                Console.BackgroundColor = ConsoleColor.Green;
                 Console.WriteLine($"* 레벨업! Lv.{player.Level -1} -> Lv.{player.Level}");
             }
+            Console.ResetColor();
         }
         else
         {
+            Console.BackgroundColor = ConsoleColor.DarkRed;
+            Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine("던전 실패");
+            Console.ResetColor();
 
         }
 
@@ -880,7 +997,9 @@ internal class Program
             }
 
             AnswerClear();
+            Console.ForegroundColor = ConsoleColor.Red;
             Console.Write("잘못된 입력입니다.");
+            Console.ResetColor();
             Thread.Sleep(2000);
             AnswerClear();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
@@ -948,16 +1067,36 @@ public class Item
     }
 
     public string Name { get; }
-    public string Effect { get; set; }
+    public int Effect { get; set; }
     public ItemType Type { get; }     // 아이템 분류
     public string Desc { get; }     // 아이템 설명
     public int? Level { get; set; }
     public int Price { get; }
+    public int SellignPrice { get; set; }
     public bool Equipped { get; set; }
     public int Count { get; set; }
+    public string EffectType
+    {
+        get
+        {
+            switch (Type)
+            {
+                case ItemType.Weapon:
+                    return "공격력";
+                case ItemType.Shield:
+                    return "방어력";
+                case ItemType.Food:
+                    return "체력 회복";
+                case ItemType.Potion:
+                    return "체력 최대치";
+                default:
+                    return "";
+            }
+        }
+    }
 
 
-    public Item(string name, string effect, ItemType type, string desc, int? level, int price, bool equipped)
+    public Item(string name, int effect, ItemType type, string desc, int? level, int price, bool equipped)
     {
         Name = name;
         Effect = effect;
@@ -967,26 +1106,27 @@ public class Item
         Price = price;
         Equipped = equipped;
         Count = 0;
+
     }
 }
 
 class Store
 {
-    static Item invincibleShield = new Item("무적의 방패", "방어력      +10", Item.ItemType.Shield, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
-    static Item dragonGuard = new Item("용의 수호", "방어력      +30", Item.ItemType.Shield, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
-    static Item celestialArmor = new Item("천상의 갑주", "방어력      +50", Item.ItemType.Shield, "천계의 갑옷", 1, 10000, false);
+    static Item invincibleShield = new Item("무적의 방패", 10 , Item.ItemType.Shield, "고대 전사가 들었다 전해지는 방패", 1, 1000, false);
+    static Item dragonGuard = new Item("용의 수호", 30, Item.ItemType.Shield, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
+    static Item celestialArmor = new Item("천상의 갑주", 50 , Item.ItemType.Shield, "천계의 갑옷", 1, 10000, false);
 
-    static Item windbladeBow = new Item("검풍의 활", "공격력      +5", Item.ItemType.Weapon, "바람을 타는 검처럼 화살을 쏘는 활", 1, 1000, false);
-    static Item dragonSword = new Item("비룡의 검", "공격력      +10", Item.ItemType.Weapon, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
-    static Item heavenlySpear = new Item("천무의 창", "공격력      +20", Item.ItemType.Weapon, "천계의 갑옷", 1, 10000, false);
+    static Item windbladeBow = new Item("검풍의 활", 5, Item.ItemType.Weapon, "바람을 타는 검처럼 화살을 쏘는 활", 1, 1000, false);
+    static Item dragonSword = new Item("비룡의 검", 10, Item.ItemType.Weapon, "용의 비늘로 만든 강력한 방패", 1, 5000, false);
+    static Item heavenlySpear = new Item("천무의 창", 20, Item.ItemType.Weapon, "천계의 갑옷", 1, 10000, false);
 
-    static Item potato = new Item("감자", "체력 회복   +10", Item.ItemType.Food, "맛은 없지만 필요한 비상식량", null, 200, false);
-    static Item chicken = new Item("백숙", "체력 회복   +30", Item.ItemType.Food, "가성비 좋은 닭요리", null, 500, false);
-    static Item boyang = new Item("삼선보양탕", "체력 회복   +70", Item.ItemType.Food, "체력 회복에 좋은 보양탕", null, 1000, false);   
+    static Item potato = new Item("감자", 10 , Item.ItemType.Food, "맛은 없지만 필요한 비상식량", null, 200, false);
+    static Item chicken = new Item("백숙", 30, Item.ItemType.Food, "가성비 좋은 닭요리", null, 500, false);
+    static Item boyang = new Item("삼선보양탕", 70, Item.ItemType.Food, "체력 회복에 좋은 보양탕", null, 1000, false);   
 
-    static Item sweetJuice = new Item("달달주스", "체력 최대치 +2", Item.ItemType.Potion, "힘을 나게 해주는 신비한 주스", null, 500, false);
-    static Item midPotion = new Item("중급 보약", "체력 최대치 +5", Item.ItemType.Potion, "가성비 좋은 닭요리", null, 800, false);
-    static Item toxicMushroom = new Item("독버섯 추출액", "체력 최대치 +10", Item.ItemType.Potion, "독성에 의해 신체가 강화된다", null, 1500, false);
+    static Item sweetJuice = new Item("달달주스", 2, Item.ItemType.Potion, "힘을 나게 해주는 신비한 주스", null, 500, false);
+    static Item midPotion = new Item("중급 보약", 5, Item.ItemType.Potion, "가성비 좋은 닭요리", null, 800, false);
+    static Item toxicMushroom = new Item("독버섯 추출액", 10, Item.ItemType.Potion, "독성에 의해 신체가 강화된다", null, 1500, false);
 
     public static Item[] StoreItems =
     {
