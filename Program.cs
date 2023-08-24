@@ -132,6 +132,7 @@ internal class Program
         }
     }
 
+
     static void DisplayMyInfo()     // 상태보기
     {
         Console.Clear();
@@ -185,6 +186,7 @@ internal class Program
                 break;
         }
     }
+
 
     static void DisplayInventory()  // 인벤토리
     {
@@ -265,6 +267,7 @@ internal class Program
                 break;
         }
     }
+
 
     static void EquipmentManager()  // 장착 관리
     {
@@ -358,7 +361,7 @@ internal class Program
         Console.WriteLine($"현재 모드: {organize.ToString()}");
         Console.WriteLine();
 
-        Console.WriteLine();
+        Console.WriteLine();        // 현재 아이템 정렬 모드에 따라 다르게 출력 (이 부분 더 좋은 방법 있는지 찾아보기,,)
         if (organize == InventoryMode.ItemType) Console.WriteLine("1. 레벨순으로 정렬하기");
         else Console.WriteLine("1. 종류별로 정렬하기");
         Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -380,7 +383,7 @@ internal class Program
             DisplayInventory();
             return;
         }
-        else if (organize == InventoryMode.ItemType)
+        else if (organize == InventoryMode.ItemType)        // 여기서도 현재 아이템 정렬 모드에 따라 다르게 작용하기 때문에 더 좋은 방법 찾아보기
         {
             organize = InventoryMode.ItemLevel;
             SortItems();
@@ -396,13 +399,15 @@ internal class Program
         }
     } 
 
-    static void SortItems() // 아이템 정렬 실행
+
+    static void SortItems() // 아이템 정렬 실행. 정렬 모드 변경 및 아이템 구매 / 강화 시 호출됨
     {
         if (organize == InventoryMode.ItemType)
         {
             player.PossessedItems = player.PossessedItems.OrderByDescending(i => i.Equipped)
                 .ThenBy(i => i.Type)
                 .ThenByDescending(i => i.Effect)
+                .ThenByDescending(i => i.Level)
                 .ToList();
         }
         else
@@ -410,6 +415,7 @@ internal class Program
             player.PossessedItems = player.PossessedItems.OrderByDescending(i => i.Equipped)
                .ThenByDescending(i => i.Level)
                .ThenBy(i => i.Type)
+               .ThenByDescending(i => i.Effect)
                .ToList();
         }
     }
@@ -455,7 +461,7 @@ internal class Program
 
         foreach (Item item in player.PossessedItems)
         {
-            if (item.Level == null || item.Level == 5 || item.Price == 0) continue;
+            if (item.Level == null || item.Level == 5 || item.Price == 0) continue;     // 소모품, 최고레벨 아이템, 기본템 제외
 
             switch (item.Level)
             {
@@ -473,7 +479,7 @@ internal class Program
                 case 4:
                     upgradeFee.Add(item.Price);
                     break;
-            }
+            }   // 해당 아이템의 현재 레벨을 바탕으로 판매 가격 설정
 
             Console.Write($"{tempList.Count + 1}.");
             if (item.Equipped) Console.Write("[E]");
@@ -489,7 +495,7 @@ internal class Program
             tempList.Add(item);            
         }
 
-        Console.WriteLine();
+        Console.WriteLine();        // 강화 가능한 아이템 수에 따른 다른 출력
         if (tempList.Count == 0)
         {
             Console.ForegroundColor = ConsoleColor.Gray;
@@ -530,21 +536,23 @@ internal class Program
         }
         else
         {
-            if (player.Gold >= upgradeFee[input - 1])
+            if (player.Gold >= upgradeFee[input - 1])       // 강화 가능한 경우 (재화 충분)
             {
                 Item selected = tempList[input - 1];
 
-                int effect = (int)(selected.Effect * 1.2f);
+                int effect = (int)(selected.Effect * 1.2f); // 레벨업 시 현재 효과의 1.2배가 되도록 값 저장
 
-                int changingIndex = player.PossessedItems.IndexOf(player.PossessedItems.Find(item => item.Name == selected.Name));
-                player.PossessedItems[changingIndex].Effect = effect;
-                ++player.PossessedItems[changingIndex].Level;
+                
+                selected.Effect = effect;
+                ++selected.Level;
 
                 player.Gold -= upgradeFee[input - 1];
 
-                EffectManager(player.PossessedItems[changingIndex], true);
+                EffectManager(selected, true);  // 아이템의 변동 내역이 플레이어에게 적용되도록
 
                 SortItems();
+
+                Console.WriteLine();
 
                 AnswerClear();
                 Console.ForegroundColor = ConsoleColor.Green;
@@ -553,7 +561,7 @@ internal class Program
                 Thread.Sleep(2000);
 
             }
-            else
+            else 
             {
                 AnswerClear();
                 Console.ForegroundColor = ConsoleColor.Red;
@@ -565,11 +573,12 @@ internal class Program
         }
     }
 
+
     static void EffectManager(Item item, bool isUpgrade)    // 아이템 효과 적용 (진짜 제발 수정)
-    {
+    {// isUpgrade는 이 메서드가 호출되는 경로가 강화에서인지 아닌지 판별..
         switch (item.Type)
         {
-            case Item.ItemType.Weapon:
+            case Item.ItemType.Weapon: 
                 if (item.Equipped == true && !isUpgrade)
                 {
                     player.AddAtk = 0;
@@ -577,16 +586,16 @@ internal class Program
                 }
                 else 
                 {
-                    player.AddAtk = item.Effect;
                     if (!isUpgrade)
                     {
-                        int index1 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Weapon);
-                        if (index1 != -1)
+                        Item equipped = player.PossessedItems.Find(i => i.Equipped == true && i.Type == Item.ItemType.Weapon);  // item과 동일한 타입의 아이템 중 장착된 것
+                        if (equipped  != null)
                         {
-                            player.PossessedItems[index1].Equipped = false;
+                            equipped.Equipped = false;
                         }
                         item.Equipped = true;
-                    }                    
+                    }
+                    player.AddAtk = item.Effect;
                 }
 
                 break;
@@ -602,10 +611,10 @@ internal class Program
                     player.AddDef = item.Effect;
                     if (!isUpgrade)
                     {
-                        int index2 = player.PossessedItems.FindIndex(i => i.Equipped && i.Type == Item.ItemType.Shield);
-                        if (index2 != -1)
+                        Item equipped = player.PossessedItems.Find(i => i.Equipped  == true && i.Type == Item.ItemType.Shield);  // item과 동일한 타입의 아이템 중 장착된 것
+                        if (equipped != null)
                         {
-                            player.PossessedItems[index2].Equipped = false;
+                            equipped.Equipped = false;
                         }
                         item.Equipped = true;
                     }
@@ -624,9 +633,8 @@ internal class Program
                 {
                     if (player.CurrentHp + addedHp > player.Hp) player.CurrentHp = player.Hp;
                     else player.CurrentHp += addedHp;
-                    int index3 = player.PossessedItems.FindIndex(i => i.Name == item.Name);
-                    --player.PossessedItems[index3].Count;
-                    if (player.PossessedItems[index3].Count == 0) player.PossessedItems.RemoveAt(index3);
+                    --item.Count;
+                    if (item.Count == 0) player.PossessedItems.Remove(item);
                 }
                 break;
 
@@ -637,9 +645,8 @@ internal class Program
                     player.CurrentHp += AddHp;
                 }
                 player.Hp += AddHp;
-                int index4 = player.PossessedItems.FindIndex(i => i.Name == item.Name);
-                --player.PossessedItems[index4].Count;
-                if (player.PossessedItems[index4].Count == 0) player.PossessedItems.RemoveAt(index4);
+                --item.Count;
+                if (item.Count == 0) player.PossessedItems.Remove(item);
                 break;
         }
     }
@@ -672,9 +679,8 @@ internal class Program
         {
             Console.Write("-    ");
             WritingItem(item);
-            Console.SetCursorPosition(88, Console.CursorTop - 1);
-            if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
-            else Console.WriteLine($" {item.Price} G ");
+            Console.SetCursorPosition(88, Console.CursorTop - 1); 
+            Console.WriteLine($" {item.Price} G ");
 
         }
         Console.WriteLine();
@@ -710,6 +716,7 @@ internal class Program
         }
     }
 
+
     static void ItemBuy()   // 아이템 구매
     {
         Console.Clear();
@@ -742,7 +749,7 @@ internal class Program
             Console.Write($"{count++}.");
             Console.SetCursorPosition(88, Console.CursorTop);
 
-            if (player.PossessedItems.IndexOf(item) != -1 && item.Level != null) Console.WriteLine(" 구매 완료 ");
+            if (player.PossessedItems.Find(i => i.Name == item.Name) != null && item.Level != null) Console.WriteLine(" 구매 완료 ");
             else Console.WriteLine($" {item.Price} G ");
         }
         Console.WriteLine();
@@ -762,51 +769,56 @@ internal class Program
 
         int input = CheckValidInput(0, 12);
         Console.ResetColor();
+
        
         if (input == 0) DisplayStore();
-        else if (player.PossessedItems.IndexOf(Store.StoreItems[input - 1]) != -1 && Store.StoreItems[input - 1].Level != null)
+        else
         {
-            AnswerClear();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("이미 구매한 아이템입니다.");
-            Thread.Sleep(2000);
-
-        }
-        else if (Store.StoreItems[input - 1].Price <= player.Gold)
-        {
-            AnswerClear();
-            Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine("구매를 완료했습니다.");
-
-            Item item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
-            if (player.PossessedItems.IndexOf(item) == -1)
+            Item sellected = Store.StoreItems[input - 1];
+            if (player.PossessedItems.IndexOf(sellected) != -1 && sellected.Level != null) // 구매했는데 소모품이 아닐 경우 (중복구매 방지)
             {
-                player.PossessedItems.Add(DeepClone<Item>(Store.StoreItems[input - 1]));
-                item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
+                AnswerClear();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("이미 구매한 아이템입니다.");
+                Thread.Sleep(2000);
             }
-
-            if (item.Level == null)
+            else if (sellected.Price <= player.Gold)
             {
-                ++item.Count;
+                AnswerClear();
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine("구매를 완료했습니다.");
+
+                Item item = player.PossessedItems.Find(i => i.Name == sellected.Name);
+                if (item == null)
+                {
+                    player.PossessedItems.Add(DeepClone<Item>(sellected));
+                    item = player.PossessedItems.Find(i => i.Name == sellected.Name);
+                }
+
+                if (item.Level == null)
+                {
+                    ++item.Count;
+                }
+                player.Gold -= sellected.Price;
+                SortItems();
+
+                Thread.Sleep(2000);
+
             }
-            player.Gold -= Store.StoreItems[input - 1].Price;
-            SortItems();
+            else if (sellected.Price > player.Gold)
+            {
+                AnswerClear();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine("Gold가 부족합니다.");
+                Console.ResetColor();
+                Thread.Sleep(2000);
 
-            Thread.Sleep(2000);
-
-        }
-        else if (Store.StoreItems[input - 1].Price > player.Gold)
-        {
-            AnswerClear();
-            Console.ForegroundColor = ConsoleColor.Red;
-            Console.WriteLine("Gold가 부족합니다.");
+            }
             Console.ResetColor();
-            Thread.Sleep(2000);
-
+            ItemBuy();
         }
-        Console.ResetColor();
-        ItemBuy();
     }
+
 
     static void ItemSell()  // 아이템 판매
     {
@@ -830,12 +842,13 @@ internal class Program
         Console.WriteLine("[보유 아이템]");
         Console.WriteLine();
 
-        List<Item> Sellable = new List<Item>();
+        List<Item> Sellable = new List<Item>();     // 판매 가능한 아이템 리스트 생성
 
         foreach (Item sellable in player.PossessedItems)
         {
             if (sellable.Price != 0) Sellable.Add(sellable);
         }
+
         if (Sellable.Count == 0)
         {
             Console.WriteLine("판매 가능한 아이템이 없습니다.");
@@ -873,6 +886,7 @@ internal class Program
                         item.SellignPrice = (int)(item.Price * 0.85);
                         break;
                 }
+
                 Console.SetCursorPosition(102, Console.CursorTop);
                 Console.WriteLine($" {item.SellignPrice} G ");
             }
@@ -905,6 +919,7 @@ internal class Program
             AnswerClear();
             AnswerClear();
             AnswerClear();
+            Console.WriteLine();
             Console.Write($"{Sellable[input - 1].Name}을(를) 판매하시겠습니까?");
             Console.ForegroundColor = ConsoleColor.Red;
             if (Sellable[input - 1].Level > 1) Console.WriteLine(" 강화 완료된 아이템입니다.");
@@ -913,6 +928,7 @@ internal class Program
             
             Console.WriteLine("1. 판매");
             Console.WriteLine("0. 취소");
+            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("원하시는 행동을 입력해주세요.");
             Console.Write(">> ");
@@ -925,11 +941,6 @@ internal class Program
             else
             {
                 Item sellected = Sellable[input - 1]; 
-                if (sellected.Equipped == true)
-                {
-                    if (sellected.Type == Item.ItemType.Weapon) player.AddAtk = 0;
-                    else if (sellected.Type == Item.ItemType.Shield) player.AddDef = 0;
-                }
 
                 player.Gold += sellected.SellignPrice;
 
@@ -941,6 +952,11 @@ internal class Program
                 }
                 else
                 {
+                    if (sellected.Equipped == true)     // 장착 중인 아이템 판매 시 추가 방어력 및 추가 공격력 리셋
+                    {
+                        if (sellected.Type == Item.ItemType.Weapon) player.AddAtk = 0;
+                        else if (sellected.Type == Item.ItemType.Shield) player.AddDef = 0;
+                    }
                     player.PossessedItems.Remove(sellected);
                 }
 
@@ -1017,21 +1033,25 @@ internal class Program
 
     }
 
+
     static void StartRestingMode()  // 휴식 시작
     {
         status = GameState.Resting;
         restingTimer = new System.Timers.Timer(30000);
         restingTimer.Elapsed += OnTimerEvent;
         restingTimer.Start();
-        Resting();
-
+        if (player.CurrentHp == player.Hp) DisplayGameIntro();
+        else Resting();
     }
+
+
     static void QuitRestingMode()   // 휴식 종료
     {
         restingTimer.Stop();
         status = GameState.Playing;
         Resting();
     }
+
 
     static void OnTimerEvent(Object source, System.Timers.ElapsedEventArgs e)   // 휴식 중 실행되는 내용 (체력 회복)
     {
@@ -1090,6 +1110,7 @@ internal class Program
         }
 
     }
+
 
     static void EnteringDungeon(int input)  // 던전 입장 
     {
@@ -1153,6 +1174,7 @@ internal class Program
 
         }
     }
+
 
     static void FightEnd(Dungeon dungeon)   // 던전 탐험 결과 
     {
@@ -1220,6 +1242,7 @@ internal class Program
         if (input == 0) DisplayGameIntro();
     }
 
+
     static void LevelControl(Dungeon dungeon)   // 경험치 계산 & 레벨에 반영
     {
         player.CurrentExp += dungeon.RewardExp;
@@ -1232,6 +1255,7 @@ internal class Program
             player.Def += 2;
         }
     }
+
 
     static int CheckValidInput(int min, int max)    // 입력값 확인
     {
@@ -1254,7 +1278,7 @@ internal class Program
             Thread.Sleep(2000);
 
             AnswerClear();
-            AnswerClear();
+            Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.WriteLine("------------------------------");
             Console.WriteLine("원하시는 행동을 입력해주세요.");
@@ -1274,7 +1298,7 @@ internal class Program
         Console.SetCursorPosition(0, Console.CursorTop - 2);
     }
 
-    static Item DeepClone<Item>(Item item)
+    static Item DeepClone<Item>(Item item)  //  아이템 깊은 복사 (상점에서 구매 시 호출)
     {
         return JsonConvert.DeserializeObject<Item>(JsonConvert.SerializeObject(item));
     }
@@ -1320,8 +1344,8 @@ public class Item
 {
     public enum ItemType
     {
-        Weapon,
         Shield,
+        Weapon,
         Food,
         Potion
     }
