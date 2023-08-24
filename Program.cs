@@ -9,13 +9,13 @@ internal class Program
     private static Character player;
     static System.Timers.Timer restingTimer;
 
-    enum GameState
+    enum GameState  // 게임 중 모드와 휴식 모드 (status로 관리)
     {
         Playing,
         Resting
     }
 
-    enum InventoryMode
+    enum InventoryMode  // 인벤토리 정렬 모드 (organize로 관리)
     {
         ItemLevel,
         ItemType
@@ -197,6 +197,7 @@ internal class Program
         Console.ResetColor();
         Console.WriteLine();
 
+        // 아이템에 의해 변동 가능한 상태 디스플레이
         Console.Write("체력   : ");
         if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
         else Console.ForegroundColor = ConsoleColor.Red;
@@ -210,11 +211,10 @@ internal class Program
         Console.WriteLine();
 
 
-
         Console.WriteLine("[아이템 목록]");
         Console.WriteLine();
 
-        foreach (Item item in player.PossessedItems)
+        foreach (Item item in player.PossessedItems)    //WritingItem 메소드에 추가적으로 표기해야 할 내용 더해서 하나씩 출력
         {
             Console.Write("- ");
             if (item.Equipped) Console.Write("[E]");
@@ -262,7 +262,7 @@ internal class Program
         }
     }
 
-    static void EquipmentManager()
+    static void EquipmentManager()  // 장착 관리
     {
         Console.Clear();
 
@@ -276,6 +276,8 @@ internal class Program
         Console.ResetColor();
         Console.WriteLine();
 
+        // 아이템에 의해 변동 가능한 상태 디스플레이
+        // (아이템에 의한 변동 내역이 잘 보이도록 아이템에 의해 더해진 추가 공격력 및 방어력 따로 표시)
         Console.Write("체력   : ");
         if (player.CurrentHp >= 50) Console.ForegroundColor = ConsoleColor.Green;
         else Console.ForegroundColor = ConsoleColor.Red;
@@ -292,7 +294,7 @@ internal class Program
         Console.WriteLine();
 
         int count = 1;
-        foreach (Item item in player.PossessedItems)
+        foreach (Item item in player.PossessedItems)  //WritingItem + 추가 정보 
         {
             Console.Write($"{count++}.");
             if (item.Equipped) Console.Write("[E]");
@@ -328,14 +330,14 @@ internal class Program
         }
         else
         {
-            EffectManager(player.PossessedItems[input - 1], false);
+            EffectManager(player.PossessedItems[input - 1], false); // 아이템 효과를 적용시키는 메서드 호출 (파라미터가 이따구인 이유는 이 메서드 자체가 더럽기 때문)
             SortItems();
             EquipmentManager();
         }
-    }
+    }  
 
 
-    static void Organize()
+    static void Organize()  // 아이템 정렬 설정
     {
         Console.Clear();
         Console.BackgroundColor = ConsoleColor.Magenta;
@@ -388,9 +390,9 @@ internal class Program
             DisplayInventory();
             return;
         }
-    }
+    } 
 
-    static void SortItems()
+    static void SortItems() // 아이템 정렬 실행
     {
         if (organize == InventoryMode.ItemType)
         {
@@ -409,7 +411,7 @@ internal class Program
     }
 
 
-    static void ItemUpgrade()
+    static void ItemUpgrade()   // 아이템 강화 
     {
         Console.Clear();
 
@@ -559,7 +561,7 @@ internal class Program
         }
     }
 
-    static void EffectManager(Item item, bool isUpgrade)
+    static void EffectManager(Item item, bool isUpgrade)    // 아이템 효과 적용 (진짜 제발 수정)
     {
         switch (item.Type)
         {
@@ -604,7 +606,6 @@ internal class Program
                         item.Equipped = true;
                     }
                 }
-
                 break;
 
             case Item.ItemType.Food:
@@ -705,7 +706,7 @@ internal class Program
         }
     }
 
-    static void ItemBuy()
+    static void ItemBuy()   // 아이템 구매
     {
         Console.Clear();
 
@@ -803,7 +804,7 @@ internal class Program
         ItemBuy();
     }
 
-    static void ItemSell()
+    static void ItemSell()  // 아이템 판매
     {
         Console.Clear();
         Console.BackgroundColor = ConsoleColor.Magenta;
@@ -948,7 +949,7 @@ internal class Program
     }
 
 
-    static void WritingItem(Item item)
+    static void WritingItem(Item item)  // 아이템 목록 나열
     {
         Console.Write("                 |        |                  |                                    |");
         Console.SetCursorPosition(7, Console.CursorTop);
@@ -964,7 +965,7 @@ internal class Program
     }
 
 
-    static void Resting()
+    static void Resting()   // 휴식 모드 설정
     {
         Console.Clear();
 
@@ -1007,7 +1008,7 @@ internal class Program
 
     }
 
-    static void StartRestingMode()
+    static void StartRestingMode()  // 휴식 시작
     {
         status = GameState.Resting;
         restingTimer = new System.Timers.Timer(30000);
@@ -1016,21 +1017,21 @@ internal class Program
         Resting();
 
     }
-    static void QuitRestingMode()
+    static void QuitRestingMode()   // 휴식 종료
     {
         restingTimer.Stop();
         status = GameState.Playing;
         Resting();
     }
 
-    static void OnTimerEvent(Object source, System.Timers.ElapsedEventArgs e)
+    static void OnTimerEvent(Object source, System.Timers.ElapsedEventArgs e)   // 휴식 중 실행되는 내용 (체력 회복)
     {
         ++player.CurrentHp;
         if (player.CurrentHp == player.Hp) QuitRestingMode();
     }
 
 
-    static void DisplayDungeon()
+    static void DisplayDungeon()    // 던전 입장
     {
         Console.Clear();
 
@@ -1081,7 +1082,7 @@ internal class Program
 
     }
 
-    static void EnteringDungeon(int input)
+    static void EnteringDungeon(int input)  // 던전 입장 
     {
         Console.Clear();
 
@@ -1144,7 +1145,7 @@ internal class Program
         }
     }
 
-    static void FightEnd(Dungeon dungeon)
+    static void FightEnd(Dungeon dungeon)   // 던전 탐험 결과 
     {
         Console.Clear();
 
@@ -1210,7 +1211,7 @@ internal class Program
         if (input == 0) DisplayGameIntro();
     }
 
-    static void LevelControl(Dungeon dungeon)
+    static void LevelControl(Dungeon dungeon)   // 경험치 계산 & 레벨에 반영
     {
         player.CurrentExp += dungeon.RewardExp;
         if (player.CurrentExp >= player.MaxExp)
@@ -1223,7 +1224,7 @@ internal class Program
         }
     }
 
-    static int CheckValidInput(int min, int max)
+    static int CheckValidInput(int min, int max)    // 입력값 확인
     {
         while (true)
         {
@@ -1252,7 +1253,7 @@ internal class Program
         }
     }
 
-    static void AnswerClear()
+    static void AnswerClear()       // 입력된 내용 지우기
     {
         Console.SetCursorPosition(0, Console.CursorTop - 2);
 
@@ -1419,7 +1420,7 @@ class Dungeon
     }
 
 
-    public bool DungeonFight(Character player)
+    public bool DungeonFight(Character player)      // 던전 승패 결정
     {
         if (player.Def + player.AddDef < RecDef)
         {
@@ -1436,13 +1437,13 @@ class Dungeon
     }
 
 
-    public void DungeonResult(Character player, ref bool success)
+    public void DungeonResult(Character player, ref bool success)   // 리워드 결정
     {
         int defGap = (player.Def + player.AddDef) - RecDef;
         player.CurrentHp -= random.Next(20 - defGap, 36 - defGap);
         if (player.CurrentHp <= 0)
         {
-            player.CurrentHp = 0;
+            player.CurrentHp = 0;       // 전투에 의해  체력 고갈 시 패배
             success = false;
             return;
         }
