@@ -2,7 +2,9 @@
 
 *내일 배움 캠프 개인 과제*
 
-https://szloveleesz.tistory.com/25 (약간의 부가 설명)
+
+(약간의 부가 설명)
+https://szloveleesz.tistory.com/25
 
 
 (8월 23일)
