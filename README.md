@@ -1,6 +1,8 @@
 # SpartaDungeon
 
 *내일 배움 캠프 개인 과제*
+https://szloveleesz.tistory.com/25 (약간의 부가 설명)
+
 
 (8월 23일)
 - 선택요구사항 1 ~ 9 완료
