@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text.RegularExpressions;
 using System;
+using System.IO;
+using Newtonsoft.Json;
+
+
 
 internal class Program
 {
@@ -777,7 +781,7 @@ internal class Program
             Item item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
             if (player.PossessedItems.IndexOf(item) == -1)
             {
-                player.PossessedItems.Add(Store.StoreItems[input - 1]);
+                player.PossessedItems.Add(DeepClone<Item>(Store.StoreItems[input - 1]));
                 item = player.PossessedItems.Find(i => i.Name == Store.StoreItems[input - 1].Name);
             }
 
@@ -826,7 +830,13 @@ internal class Program
         Console.WriteLine("[보유 아이템]");
         Console.WriteLine();
 
-        if (player.PossessedItems.Count <= 2)
+        List<Item> Sellable = new List<Item>();
+
+        foreach (Item sellable in player.PossessedItems)
+        {
+            if (sellable.Price != 0) Sellable.Add(sellable);
+        }
+        if (Sellable.Count == 0)
         {
             Console.WriteLine("판매 가능한 아이템이 없습니다.");
             Console.WriteLine();
@@ -834,9 +844,8 @@ internal class Program
         else
         {
             int count = 1;
-            foreach (Item item in player.PossessedItems)
+            foreach (Item item in Sellable)
             {
-                if (item.Price == 0) continue;
                 Console.Write("-  ");
                 Console.Write($"{count++}.");
                 WritingItem(item);
@@ -886,7 +895,7 @@ internal class Program
         Console.WriteLine("원하시는 행동을 입력해주세요.");
         Console.Write(">> ");
 
-        int input = CheckValidInput(0, player.PossessedItems.Count - 2);
+        int input = CheckValidInput(0, Sellable.Count);
         Console.ResetColor();
 
         if (input == 0) DisplayStore();
@@ -896,9 +905,9 @@ internal class Program
             AnswerClear();
             AnswerClear();
             AnswerClear();
-            Console.Write($"{player.PossessedItems[input + 1].Name}을(를) 판매하시겠습니까?");
+            Console.Write($"{Sellable[input - 1].Name}을(를) 판매하시겠습니까?");
             Console.ForegroundColor = ConsoleColor.Red;
-            if (player.PossessedItems[input + 1].Level > 1) Console.WriteLine(" 강화 완료된 아이템입니다.");
+            if (Sellable[input - 1].Level > 1) Console.WriteLine(" 강화 완료된 아이템입니다.");
             else Console.WriteLine();
             Console.ResetColor();
             
@@ -915,24 +924,24 @@ internal class Program
             }
             else
             {
-                Item item = player.PossessedItems[input + 1];
-                if (item.Equipped == true)
+                Item sellected = Sellable[input - 1]; 
+                if (sellected.Equipped == true)
                 {
-                    if (item.Type == Item.ItemType.Weapon) player.AddAtk = 0;
-                    else if (item.Type == Item.ItemType.Shield) player.AddDef = 0;
+                    if (sellected.Type == Item.ItemType.Weapon) player.AddAtk = 0;
+                    else if (sellected.Type == Item.ItemType.Shield) player.AddDef = 0;
                 }
 
-                player.Gold += item.SellignPrice;
+                player.Gold += sellected.SellignPrice;
 
 
-                if (item.Level == null)
+                if (sellected.Level == null)
                 {
-                    --item.Count;
-                    if (item.Count <= 0) player.PossessedItems.Remove(item);
+                    --sellected.Count;
+                    if (sellected.Count <= 0) player.PossessedItems.Remove(sellected);
                 }
                 else
                 {
-                    player.PossessedItems.Remove(item);
+                    player.PossessedItems.Remove(sellected);
                 }
 
                 AnswerClear();
@@ -1036,7 +1045,7 @@ internal class Program
         Console.Clear();
 
         Console.BackgroundColor = ConsoleColor.Magenta;
-        Console.WriteLine("  -----------   ");
+        Console.WriteLine("  -----------  ");
         Console.WriteLine(" | 던전 입장 | ");
         Console.WriteLine("  -----------  ");
         Console.ResetColor();
@@ -1265,6 +1274,11 @@ internal class Program
         Console.SetCursorPosition(0, Console.CursorTop - 2);
     }
 
+    static Item DeepClone<Item>(Item item)
+    {
+        return JsonConvert.DeserializeObject<Item>(JsonConvert.SerializeObject(item));
+    }
+
 }
 
 
@@ -1301,7 +1315,7 @@ public class Character
     }
 }
 
-
+[Serializable]
 public class Item
 {
     public enum ItemType
@@ -1340,8 +1354,6 @@ public class Item
             }
         }
     }
-
-
     public Item(string name, int effect, ItemType type, string desc, int? level, int price, bool equipped)
     {
         Name = name;
@@ -1352,7 +1364,6 @@ public class Item
         Price = price;
         Equipped = equipped;
         Count = 0;
-
     }
 }
 
@@ -1382,6 +1393,8 @@ class Store
         sweetJuice, midPotion, toxicMushroom
     };
 }
+
+
 
 
 class Dungeon
